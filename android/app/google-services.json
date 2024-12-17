@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "677943389995",
+    "project_id": "beyoundthecall",
+    "storage_bucket": "beyoundthecall.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:677943389995:android:c8e6adebf6bb2a5be25f6e",
+        "android_client_info": {
+          "package_name": "com.example.brightminds_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBA6Bbrws9h9AFELD9LNQFCaONgy0V0kaE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

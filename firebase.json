@@ -1,0 +1,36 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "beyoundthecall",
+          "appId": "1:677943389995:android:c8e6adebf6bb2a5be25f6e",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "beyoundthecall",
+          "configurations": {
+            "android": "1:677943389995:android:c8e6adebf6bb2a5be25f6e",
+            "web": "1:677943389995:web:1169627f02a2be74e25f6e"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

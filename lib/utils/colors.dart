@@ -1,0 +1,21 @@
+import 'package:flutter/material.dart';
+
+final black = Colors.black;
+final colorwhite = Colors.white;
+final borderColor = Color(0xff3C4755);
+final appBarColor = Color(0xff141326);
+final textColor = Color(0xffE3823C);
+final red = Color(0xFFF95B51);
+final c = Color(0xFF666666);
+final b = Color(0xffE84040);
+final g = Colors.green;
+final mainBtnColor = Color(0xffB1CD61);
+final appColor = Color(0xff0F172A);
+final dateColor = Color(0xff475569);
+final cateColor = Color(0xff171717);
+final contColor = Color(0xff60A5FA);
+final dividerColor = Color(0xffCBD5E1);
+final completeColor = Color(0xff22C55E);
+final cancelColor = Color(0xffEF4444);
+final hintColor = Color(0xff94A3B8);
+final circle = Color(0xffF1F5F9);
