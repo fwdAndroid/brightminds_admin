@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:brightminds_admin/screens/deleteupdate/update_categories.dart';
 import 'package:brightminds_admin/screens/detail/lesson_detail.dart';
 import 'package:brightminds_admin/screens/main_screen/add/add_exercise.dart';
@@ -13,10 +11,12 @@ class ViewCategory extends StatefulWidget {
   String categoryName;
   String image;
   String id;
+  String level;
   ViewCategory(
       {super.key,
       required this.id,
       required this.categoryName,
+      required this.level,
       required this.image});
 
   @override
@@ -45,6 +45,7 @@ class _ViewCategoryState extends State<ViewCategory> {
                   image: widget.image,
                 ),
                 ImageSelection(
+                  level: widget.level,
                   categoryName: widget.categoryName,
                 ),
               ],
@@ -157,7 +158,8 @@ class FormSelection extends StatelessWidget {
 
 class ImageSelection extends StatelessWidget {
   final String categoryName;
-  ImageSelection({super.key, required this.categoryName});
+  final String level;
+  ImageSelection({super.key, required this.categoryName, required this.level});
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +187,7 @@ class ImageSelection extends StatelessWidget {
             var exercises = doc['exercises'] as List<dynamic>? ?? [];
             for (var exercise in exercises) {
               // Match levelSubCategory with categoryName
-              if (exercise['levelSubCategory'] == categoryName) {
+              if (exercise['levelSubCategory'] == categoryName && exercise['levelCategory'] == level) {
                 filteredExercises.add(exercise);
               }
             }

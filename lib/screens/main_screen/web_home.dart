@@ -119,7 +119,7 @@ class ExampleSidebarX extends StatelessWidget {
         ),
         SidebarXItem(
           icon: Icons.medical_information,
-          label: 'Subjects',
+          label: 'Levels',
         ),
         // SidebarXItem(
         //   icon: Icons.dock,

@@ -50,15 +50,18 @@ class _FormSectionState extends State<_FormSection> {
   var uuid = Uuid().v4();
   Uint8List? _image;
   bool isAdded = false;
-  String dropdownvalue = 'Level 1';
+  String dropdownvalue = 'Pre-Kindergarden';
 
   // List of items in our dropdown menu
   var items = [
+    'Pre-Kindergarden',
+    'Kindergarden',
     'Level 1',
     'Level 2',
     'Level 3',
     'Level 4',
     'Level 5',
+    'Level 6'
   ];
 
   @override
@@ -91,33 +94,33 @@ class _FormSectionState extends State<_FormSection> {
                       ),
               ),
             ),
-            // SizedBox(height: 10),
-            // Padding(
-            //   padding: const EdgeInsets.all(8.0),
-            //   child: DropdownButton(
-            //     // Initial Value
-            //     isExpanded: true,
-            //     value: dropdownvalue,
+            SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: DropdownButton(
+                // Initial Value
+                isExpanded: true,
+                value: dropdownvalue,
 
-            //     // Down Arrow Icon
-            //     icon: const Icon(Icons.keyboard_arrow_down),
+                // Down Arrow Icon
+                icon: const Icon(Icons.keyboard_arrow_down),
 
-            //     // Array list of items
-            //     items: items.map((String items) {
-            //       return DropdownMenuItem(
-            //         value: items,
-            //         child: Text(items),
-            //       );
-            //     }).toList(),
-            //     // After selecting the desired option,it will
-            //     // change button value to selected value
-            //     onChanged: (String? newValue) {
-            //       setState(() {
-            //         dropdownvalue = newValue!;
-            //       });
-            //     },
-            //   ),
-            // ),
+                // Array list of items
+                items: items.map((String items) {
+                  return DropdownMenuItem(
+                    value: items,
+                    child: Text(items),
+                  );
+                }).toList(),
+                // After selecting the desired option,it will
+                // change button value to selected value
+                onChanged: (String? newValue) {
+                  setState(() {
+                    dropdownvalue = newValue!;
+                  });
+                },
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: InputText(
@@ -150,7 +153,7 @@ class _FormSectionState extends State<_FormSection> {
 
                             await Database().addServices(
                               categoryName: serviceNameController.text.trim(),
-                              level: "Level 3",
+                              level: dropdownvalue,
                               file: _image!,
                             );
                             setState(() {
