@@ -30,8 +30,13 @@ class _ViewCategoryState extends State<ViewCategory> {
       floatingActionButton: FloatingActionButton(
           child: Icon(Icons.add),
           onPressed: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => AddExerciseScreen()));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => AddExerciseScreen(
+                          level: widget.level,
+                          categoryName: widget.categoryName,
+                        )));
           }),
       appBar: AppBar(),
       body: Column(
@@ -187,7 +192,8 @@ class ImageSelection extends StatelessWidget {
             var exercises = doc['exercises'] as List<dynamic>? ?? [];
             for (var exercise in exercises) {
               // Match levelSubCategory with categoryName
-              if (exercise['levelSubCategory'] == categoryName && exercise['levelCategory'] == level) {
+              if (exercise['levelSubCategory'] == categoryName &&
+                  exercise['levelCategory'] == level) {
                 filteredExercises.add(exercise);
               }
             }

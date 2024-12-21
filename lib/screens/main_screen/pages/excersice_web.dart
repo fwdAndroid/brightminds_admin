@@ -5,7 +5,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class ExcersiceWeb extends StatefulWidget {
-  const ExcersiceWeb({super.key});
+  String level;
+  String categoryName;
+  ExcersiceWeb({super.key, required this.level, required this.categoryName});
 
   @override
   State<ExcersiceWeb> createState() => _ExcersiceWebState();
@@ -20,7 +22,11 @@ class _ExcersiceWebState extends State<ExcersiceWeb> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (builder) => AddExerciseScreen()),
+            MaterialPageRoute(
+                builder: (builder) => AddExerciseScreen(
+                      level: widget.level,
+                      categoryName: widget.categoryName,
+                    )),
           );
         },
         child: Icon(

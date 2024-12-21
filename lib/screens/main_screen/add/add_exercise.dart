@@ -13,7 +13,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 
 class AddExerciseScreen extends StatefulWidget {
-  const AddExerciseScreen({super.key});
+  String categoryName;
+  String level;
+  AddExerciseScreen(
+      {super.key, required this.categoryName, required this.level});
 
   @override
   State<AddExerciseScreen> createState() => _AddExerciseScreenState();
@@ -25,11 +28,14 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
-        children: const [
+        children: [
           Expanded(
             child: Row(
               children: [
-                _FormSection(),
+                _FormSection(
+                  categoryName: widget.categoryName,
+                  level: widget.level,
+                ),
                 _ImageSection(),
               ],
             ),
@@ -41,7 +47,9 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 }
 
 class _FormSection extends StatefulWidget {
-  const _FormSection({Key? key}) : super(key: key);
+  String categoryName;
+  String level;
+  _FormSection({super.key, required this.categoryName, required this.level});
 
   @override
   State<_FormSection> createState() => _FormSectionState();
@@ -52,9 +60,6 @@ class _FormSectionState extends State<_FormSection> {
   Uint8List? _image;
   Uint8List? _audio;
   bool isAdded = false;
-
-  String? selectedLevel;
-  String? selectedCategory;
 
   Future<void> selectAudio() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
@@ -79,30 +84,9 @@ class _FormSectionState extends State<_FormSection> {
     });
   }
 
-  List<String> categories = [];
-
-  Future<void> fetchCategories() async {
-    try {
-      // Fetch categories from Firestore
-      final snapshot =
-          await FirebaseFirestore.instance.collection('categories').get();
-
-      // Extract category names
-      List<String> fetchedCategories =
-          snapshot.docs.map((doc) => doc['categoryName'] as String).toList();
-
-      setState(() {
-        categories = fetchedCategories;
-      });
-    } catch (e) {
-      showMessageBar("Failed to fetch categories: $e", context);
-    }
-  }
-
   @override
   void initState() {
     super.initState();
-    fetchCategories();
   }
 
   @override
@@ -137,34 +121,8 @@ class _FormSectionState extends State<_FormSection> {
               child: Text(_audio == null ? "Add Audio" : "Audio Selected"),
             ),
             const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: categories.isEmpty
-                        ? Center(child: Text("No Categories Found"))
-                        : DropdownButton<String>(
-                            hint: const Text('Select Category'),
-                            value: selectedCategory,
-                            onChanged: (String? newValue) {
-                              setState(() {
-                                selectedCategory = newValue;
-                              });
-                            },
-                            items: categories.map((String category) {
-                              return DropdownMenuItem<String>(
-                                value: category,
-                                child: Text(category),
-                              );
-                            }).toList(),
-                          ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
+            Text("Level : ${widget.level}"),
+            Text("Subject: ${widget.categoryName} "),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: InputText(
@@ -196,8 +154,8 @@ class _FormSectionState extends State<_FormSection> {
                           });
 
                           await Database().addExercise(
-                            levelSubCategory: selectedCategory!,
-                            levelCategory: "Level 3",
+                            levelSubCategory: widget.categoryName,
+                            levelCategory: widget.level,
                             characterName: serviceNameController.text.trim(),
                             file: _image!,
                             audioFile: _audio!,
@@ -208,8 +166,7 @@ class _FormSectionState extends State<_FormSection> {
                           });
                           showMessageBar(
                               "Exercise Added Successfully", context);
-                                                     Navigator.pop(context);
-
+                          Navigator.pop(context);
                         }
                       },
                     ),
