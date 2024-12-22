@@ -1,3 +1,4 @@
+import 'package:brightminds_admin/screens/greek/greek_section.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/category_web.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/complaint_screen.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/excersice_web.dart';
@@ -121,10 +122,10 @@ class ExampleSidebarX extends StatelessWidget {
           icon: Icons.medical_information,
           label: 'Levels',
         ),
-        // SidebarXItem(
-        //   icon: Icons.dock,
-        //   label: 'Lessons',
-        // ),
+        SidebarXItem(
+          icon: Icons.dock,
+          label: 'Greek Section',
+        ),
         SidebarXItem(
           icon: Icons.compare,
           label: 'Complaint',
@@ -158,13 +159,13 @@ class _ScreensExample extends StatelessWidget {
           case 1:
             return const CategoryWeb();
 
-          // case 2:
-          //   return const ExcersiceWeb();
-
           case 2:
-            return const ComplaintScreen();
+            return GreekSection();
 
           case 3:
+            return const ComplaintScreen();
+
+          case 4:
             return AlertDialog(
               title: const Text('Logout Alert'),
               content: SingleChildScrollView(
