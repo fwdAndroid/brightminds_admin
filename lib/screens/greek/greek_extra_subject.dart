@@ -1,31 +1,36 @@
-import 'package:brightminds_admin/screens/main_screen/add/add_categories.dart';
-import 'package:brightminds_admin/screens/main_screen/view/view_category.dart';
+import 'package:brightminds_admin/screens/greek/add_greek_extra_subject.dart';
+import 'package:brightminds_admin/screens/greek/greek_extra_view.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class CategoryLevelWise extends StatefulWidget {
+import '../../utils/colors.dart';
+
+class GreekExtraSubject extends StatefulWidget {
   String level;
-  CategoryLevelWise({super.key, required this.level});
+  GreekExtraSubject({super.key, required this.level});
 
   @override
-  State<CategoryLevelWise> createState() => _CategoryLevelWiseState();
+  State<GreekExtraSubject> createState() => _GreekExtraSubjectState();
 }
 
-class _CategoryLevelWiseState extends State<CategoryLevelWise> {
+class _GreekExtraSubjectState extends State<GreekExtraSubject> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(
-      //   child: Icon(Icons.add),
-      //   onPressed: () {
-      //     Navigator.push(
-      //         context, MaterialPageRoute(builder: (builder) => AddCategory()));
-      //   },
-      // ),
-      appBar: AppBar(),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: mainBtnColor,
+        onPressed: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (builder) =>
+                      AddGreekExtraSubject(level: widget.level)));
+        },
+        child: Icon(Icons.add),
+      ),
       body: StreamBuilder(
           stream: FirebaseFirestore.instance
-              .collection("categories")
+              .collection("extras")
               .where("level", isEqualTo: widget.level)
               .snapshots(),
           builder:
@@ -68,7 +73,7 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (builder) => ViewCategory(
+                                    builder: (builder) => GreekExtraViews(
                                         level: documentData['level'],
                                         id: documentData['uuid'],
                                         categoryName:

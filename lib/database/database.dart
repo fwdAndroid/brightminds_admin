@@ -81,4 +81,82 @@ class Database {
     }
     return res;
   }
+
+  Future<String> addExtras(
+      {required String categoryName,
+      required String level,
+      required Uint8List file}) async {
+    String res = 'Wrong Service Name';
+    try {
+      if (categoryName.isNotEmpty || level.isNotEmpty) {
+        String photoURL = await StorageMethods()
+            .uploadImageToStorage('ExtraPics', file, true);
+
+        var uuid = Uuid().v4();
+        //Add User to the database with modal
+        ServiceModel userModel = ServiceModel(
+            categoryName: categoryName,
+            level: level,
+            uuid: uuid,
+            photoURL: photoURL);
+        await FirebaseFirestore.instance
+            .collection('extras')
+            .doc(uuid)
+            .set(userModel.toJson());
+        res = 'success';
+      }
+    } catch (e) {
+      res = e.toString();
+    }
+    return res;
+  }
+
+  Future<String> addExtraExercise(
+      {required String characterName,
+      required Uint8List file, // Image file
+      required Uint8List audioFile, // Audio file
+      required String levelSubCategory,
+      required String levelCategory}) async {
+    String res = 'Something went wrong';
+    try {
+      if (characterName.isNotEmpty) {
+        print("Uploading image...");
+        String photoURL = await StorageMethods()
+            .uploadImageToStorage('ExercisePics', file, true);
+
+        print("Uploading audio...");
+        String audioURL = await StorageMethods().uploadMP3ToStorage(audioFile);
+
+        String uuid = Uuid().v4();
+        print("Creating exercise model...");
+        ExersciseModel exerciseModel = ExersciseModel(
+          levelCategory: levelCategory,
+          levelSubCategory: levelSubCategory,
+          characterName: characterName,
+          uuid: uuid,
+          photoURL: photoURL,
+          audioURL: audioURL,
+        );
+
+        // Ensure category document exists, if not, create it.
+
+        // Add exercise to the array field 'exercises' in the category document.
+        print("Adding exercise to Firestore...");
+        await FirebaseFirestore.instance
+            .collection('extraletters')
+            .doc(uuid)
+            .set({
+          'exercises': FieldValue.arrayUnion([exerciseModel.toJson()]),
+        });
+
+        res = 'success';
+      } else {
+        res = 'Category or Character Name is missing';
+      }
+    } catch (e) {
+      print("Error in addExercise: $e");
+      res = e.toString();
+    }
+    return res;
+  }
 }

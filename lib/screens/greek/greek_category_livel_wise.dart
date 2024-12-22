@@ -1,27 +1,30 @@
-import 'package:brightminds_admin/screens/main_screen/add/add_categories.dart';
+import 'package:brightminds_admin/screens/greek/add_catgory_widget_level_wise.dart';
 import 'package:brightminds_admin/screens/main_screen/view/view_category.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class CategoryLevelWise extends StatefulWidget {
+class GreekCategoryLevelWise extends StatefulWidget {
   String level;
-  CategoryLevelWise({super.key, required this.level});
+  GreekCategoryLevelWise({super.key, required this.level});
 
   @override
-  State<CategoryLevelWise> createState() => _CategoryLevelWiseState();
+  State<GreekCategoryLevelWise> createState() => _GreekCategoryLevelWiseState();
 }
 
-class _CategoryLevelWiseState extends State<CategoryLevelWise> {
+class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(
-      //   child: Icon(Icons.add),
-      //   onPressed: () {
-      //     Navigator.push(
-      //         context, MaterialPageRoute(builder: (builder) => AddCategory()));
-      //   },
-      // ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (builder) =>
+                      AddCatgoryWidgetLevelWise(level: widget.level)));
+        },
+      ),
       appBar: AppBar(),
       body: StreamBuilder(
           stream: FirebaseFirestore.instance
