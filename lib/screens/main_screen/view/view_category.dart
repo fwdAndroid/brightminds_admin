@@ -164,6 +164,7 @@ class FormSelection extends StatelessWidget {
 class ImageSelection extends StatelessWidget {
   final String categoryName;
   final String level;
+
   ImageSelection({super.key, required this.categoryName, required this.level});
 
   @override
@@ -184,6 +185,7 @@ class ImageSelection extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
+
           // If no data is found
           List<Map<String, dynamic>> filteredExercises = [];
 
@@ -198,11 +200,36 @@ class ImageSelection extends StatelessWidget {
               }
             }
           }
-          // Sort the exercises alphabetically by 'characterName'
+
+          // Sort the exercises by numeric and alphabetic sequence
           filteredExercises.sort((a, b) {
-            String nameA = a['characterName']?.toString().toLowerCase() ?? '';
-            String nameB = b['characterName']?.toString().toLowerCase() ?? '';
-            return nameA.compareTo(nameB);
+            int parseOrder(String? characterName) {
+              // Extract number from the beginning of the string
+              final numberMatch =
+                  RegExp(r'^\d+').firstMatch(characterName ?? '');
+              if (numberMatch != null) {
+                return int.parse(
+                    numberMatch.group(0)!); // Return the number if found
+              }
+              // Non-numeric strings are treated as very large numbers
+              return double.maxFinite.toInt();
+            }
+
+            String parseString(String? characterName) {
+              // Return the string part in lowercase for sorting
+              return characterName?.toLowerCase() ?? '';
+            }
+
+            // Compare numeric order first
+            int orderA = parseOrder(a['characterName']);
+            int orderB = parseOrder(b['characterName']);
+            if (orderA != orderB) {
+              return orderA.compareTo(orderB);
+            }
+
+            // If numeric values are equal, compare alphabetically
+            return parseString(a['characterName'])
+                .compareTo(parseString(b['characterName']));
           });
 
           // If no exercises are found
@@ -211,6 +238,7 @@ class ImageSelection extends StatelessWidget {
               child: Text('No Exercises Found'),
             );
           }
+
           return LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               // Dynamically calculate the number of columns based on screen width

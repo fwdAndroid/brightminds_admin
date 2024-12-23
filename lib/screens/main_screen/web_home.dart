@@ -1,7 +1,6 @@
 import 'package:brightminds_admin/screens/greek/greek_section.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/category_web.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/complaint_screen.dart';
-import 'package:brightminds_admin/screens/main_screen/pages/excersice_web.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/users.dart';
 import 'package:brightminds_admin/screens/web_auth/web_login.dart';
 import 'package:brightminds_admin/utils/colors.dart';
@@ -120,7 +119,7 @@ class ExampleSidebarX extends StatelessWidget {
         ),
         SidebarXItem(
           icon: Icons.medical_information,
-          label: 'Levels',
+          label: 'English Section',
         ),
         SidebarXItem(
           icon: Icons.dock,
