@@ -255,7 +255,6 @@ class ImageSelection extends StatelessWidget {
                   crossAxisCount: crossAxisCount, // Minimum 4 items
                   crossAxisSpacing: 10,
                   mainAxisSpacing: 10,
-                  childAspectRatio: 1.2, // Adjust to control height/width ratio
                 ),
                 itemCount: filteredExercises.length,
                 itemBuilder: (BuildContext context, int index) {

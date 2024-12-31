@@ -59,56 +59,90 @@ class _CategoryWebState extends State<CategoryWeb> {
         ),
         body: SingleChildScrollView(
           child: Column(children: [
-            _buildLevelCard(context, 'Pre-Kindergarden', 'Extra Subject', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) =>
-                          AddExtraCategory(level: 'Pre-Kindergarden')));
-            }),
-            _buildLevelCard(context, 'Kindergarden', 'Extra Subject', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) =>
-                          AddExtraCategory(level: 'Kindergarden')));
-            }),
-            _buildLevelCard(context, 'Level 1', 'Extra Subject', () {
+            Card(
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              child: ListTile(
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                title: Text(
+                  "Pre-Kindergarden",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                trailing: Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (builder) => CategoryLevelWise(
+                                level: "Pre-Kindergarden",
+                              )));
+                },
+              ),
+            ),
+            Card(
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              child: ListTile(
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                title: Text(
+                  "Kindergarden",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                trailing: Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (builder) => CategoryLevelWise(
+                                level: "Kindergarden",
+                              )));
+                },
+              ),
+            ),
+            _buildLevelCard(context, 'Level 1', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (builder) =>
                           AddExtraCategory(level: 'Level 1')));
             }),
-            _buildLevelCard(context, 'Level 2', 'Extra Subject', () {
+            _buildLevelCard(context, 'Level 2', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (builder) =>
                           AddExtraCategory(level: 'Level 2')));
             }),
-            _buildLevelCard(context, 'Level 3', 'Extra Subject', () {
+            _buildLevelCard(context, 'Level 3', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (builder) =>
                           AddExtraCategory(level: 'Level 3')));
             }),
-            _buildLevelCard(context, 'Level 4', 'Extra Subject', () {
+            _buildLevelCard(context, 'Level 4', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (builder) =>
                           AddExtraCategory(level: 'Level 4')));
             }),
-            _buildLevelCard(context, 'Level 5', 'Extra Subject', () {
+            _buildLevelCard(context, 'Level 5', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
                       builder: (builder) =>
                           AddExtraCategory(level: 'Level 5')));
             }),
-            _buildLevelCard(context, 'Level 6', 'Extra Subject', () {
+            _buildLevelCard(context, 'Level 6', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(

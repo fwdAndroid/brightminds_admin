@@ -60,23 +60,55 @@ class _GreekSectionState extends State<GreekSection> {
         body: SingleChildScrollView(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            _buildLevelCard(context, 'Προνήπιο', 'Extra Subject', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
-                            level: "Προνήπιο",
-                          )));
-            }),
-            _buildLevelCard(context, 'Νηπιαγωγείο', 'Extra Subject', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
-                            level: "Νηπιαγωγείο",
-                          )));
-            }),
-            _buildLevelCard(context, 'Επίπεδο 1', 'Extra Subject  ', () {
+            Card(
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              child: ListTile(
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                title: Text(
+                  "Προνήπιο",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                trailing: Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (builder) => GreekExtraSubject(
+                                level: "Προνήπιο",
+                              )));
+                },
+              ),
+            ),
+            Card(
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              child: ListTile(
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                title: Text(
+                  "Νηπιαγωγείο",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                trailing: Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (builder) => GreekExtraSubject(
+                                level: "Νηπιαγωγείο",
+                              )));
+                },
+              ),
+            ),
+            _buildLevelCard(context, 'Επίπεδο 1', 'Extra  ', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -84,7 +116,7 @@ class _GreekSectionState extends State<GreekSection> {
                             level: 'Επίπεδο 1',
                           )));
             }),
-            _buildLevelCard(context, 'Επίπεδο 2', 'Extra Subject  ', () {
+            _buildLevelCard(context, 'Επίπεδο 2', 'Extra  ', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -92,7 +124,7 @@ class _GreekSectionState extends State<GreekSection> {
                             level: 'Επίπεδο 2',
                           )));
             }),
-            _buildLevelCard(context, 'Επίπεδο 3', 'Extra Subject  ', () {
+            _buildLevelCard(context, 'Επίπεδο 3', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -100,7 +132,7 @@ class _GreekSectionState extends State<GreekSection> {
                             level: "Επίπεδο 3",
                           )));
             }),
-            _buildLevelCard(context, 'Επίπεδο 4', 'Extra Subject  ', () {
+            _buildLevelCard(context, 'Επίπεδο 4', 'Extra  ', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -108,7 +140,7 @@ class _GreekSectionState extends State<GreekSection> {
                             level: "Επίπεδο 4",
                           )));
             }),
-            _buildLevelCard(context, 'Επίπεδο 5', 'Extra Subject  ', () {
+            _buildLevelCard(context, 'Επίπεδο 5', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -116,7 +148,7 @@ class _GreekSectionState extends State<GreekSection> {
                             level: "Επίπεδο 5",
                           )));
             }),
-            _buildLevelCard(context, 'Επίπεδο 6', 'Extra Subject  ', () {
+            _buildLevelCard(context, 'Επίπεδο 6', 'Extra', () {
               Navigator.push(
                   context,
                   MaterialPageRoute(
