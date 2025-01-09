@@ -1,14 +1,12 @@
 import 'package:brightminds_admin/database/auth_methods.dart';
-import 'package:brightminds_admin/model/user_model.dart';
 import 'package:brightminds_admin/screens/main_screen/web_home.dart';
 import 'package:brightminds_admin/utils/app_colors.dart';
 import 'package:brightminds_admin/utils/app_style.dart';
 import 'package:brightminds_admin/utils/buttons.dart';
 import 'package:brightminds_admin/utils/colors.dart';
 import 'package:brightminds_admin/utils/input_text.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-import 'package:google_fonts/google_fonts.dart';
 
 class SignInPage extends StatelessWidget {
   const SignInPage({Key? key}) : super(key: key);
@@ -57,17 +55,53 @@ class _FormSectionState extends State<_FormSection> {
       _isLoading = true;
     });
 
-    await AuthMethods().loginUser(
-      email: _emailController.text,
-      password: _passwordController.text,
-    );
+    try {
+      // Attempt to sign in with Firebase Authentication
+      await AuthMethods().loginUser(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-    setState(() {
-      _isLoading = false;
-    });
+      // Manually check if the email and password match the specific credentials
+      if (_emailController.text.trim() == 'admin@gmail.com' &&
+          _passwordController.text.trim() == '123456') {
+        // Navigate to home if credentials are correct
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => WebHome()),
+        );
+      } else {
+        // Show error if credentials are incorrect
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Invalid credentials")),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'An error occurred. Please try again.';
 
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => WebHome()));
+      // Handle Firebase specific errors
+      switch (e.code) {
+        case 'user-not-found':
+        case 'wrong-password':
+        case 'invalid-email':
+          message = 'Invalid credentials';
+          break;
+      }
+
+      // Show error message in a SnackBar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } catch (e) {
+      // Fallback for any other errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("An unexpected error occurred.")),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -147,7 +181,6 @@ class _FormSectionState extends State<_FormSection> {
                   onTap: signIn,
                 ),
           const SizedBox(height: 30),
-          const SizedBox(height: 20),
         ],
       ),
     );

@@ -15,13 +15,13 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // floatingActionButton: FloatingActionButton(
-      //   child: Icon(Icons.add),
-      //   onPressed: () {
-      //     Navigator.push(
-      //         context, MaterialPageRoute(builder: (builder) => AddCategory()));
-      //   },
-      // ),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (builder) => AddCategory()));
+        },
+      ),
       appBar: AppBar(),
       body: StreamBuilder(
           stream: FirebaseFirestore.instance

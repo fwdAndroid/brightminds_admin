@@ -50,42 +50,29 @@ class AuthMethods {
     }
   }
 
-  Future<String> loginUser({
+  Future<void> loginUser({
     required String email,
     required String password,
   }) async {
     try {
-      // Authenticate user
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // Check if the authenticated user's UID is in the admin collection
-      DocumentSnapshot snapshot = await firebaseFirestore
-          .collection('admin')
-          .doc(userCredential.user!.uid)
-          .get();
-      if (snapshot.exists) {
-        // User is an admin, allow login
-        return 'success';
-      } else {
-        // User is not an admin, deny login
-        await _auth.signOut(); // Sign out the user
-        return 'You are not authorized to access this account.';
-      }
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        return 'User not found.';
-      } else if (e.code == 'wrong-password') {
-        return 'Wrong password provided for this user.';
-      } else {
-        return 'Firebase Authentication Error: ${e.message}';
-      }
-    } on FirebaseException catch (e) {
-      return 'Firebase Error: ${e.message}';
+      // Fetch admin collection
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
     } catch (e) {
-      return 'Unexpected Error: $e';
+      throw Exception("Error: ${e.toString()}");
+    }
+  }
+
+  Future<void> SignUp({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      // Fetch admin collection
+      await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+    } catch (e) {
+      throw Exception("Error: ${e.toString()}");
     }
   }
 }
