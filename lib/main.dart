@@ -1,4 +1,5 @@
 import 'package:brightminds_admin/firebase_options.dart';
+import 'package:brightminds_admin/screens/main_screen/pages/category_web.dart';
 import 'package:brightminds_admin/screens/web_auth/web_login.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: SignInPage(),
+      home: CategoryWeb(),
     );
   }
 }
