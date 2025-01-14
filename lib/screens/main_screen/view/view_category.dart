@@ -161,11 +161,88 @@ class FormSelection extends StatelessWidget {
   }
 }
 
-class ImageSelection extends StatelessWidget {
+class ImageSelection extends StatefulWidget {
   final String categoryName;
   final String level;
 
   ImageSelection({super.key, required this.categoryName, required this.level});
+
+  @override
+  State<ImageSelection> createState() => _ImageSelectionState();
+}
+
+class _ImageSelectionState extends State<ImageSelection> {
+  Map<String, Map<String, dynamic>> selectedExercises = {};
+  List<Map<String, dynamic>> pastedExercises = [];
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _loadPastedExercises();
+  // }
+
+  // Future<void> _loadPastedExercises() async {
+  //   // Load pasted exercises from Firestore under the letters collection
+  //   final snapshot =
+  //       await FirebaseFirestore.instance.collection('letters').get();
+  //   setState(() {
+  //     for (var doc in snapshot.docs) {
+  //       var data = doc.data();
+  //       if (data.containsKey('exercises')) {
+  //         var exercises = data['exercises'] as List<dynamic>;
+  //         for (var exercise in exercises) {
+  //           if (exercise['isPasted'] == true) {
+  //             pastedExercises.add(exercise);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   });
+  // }
+
+  Future<void> _savePastedExercises() async {
+    for (var exercise in pastedExercises) {
+      String uuid = exercise['uuid'];
+
+      // Check if a document exists for this exercise
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('letters')
+          .where('exercises', arrayContains: {'uuid': uuid}).get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var docRef = querySnapshot.docs.first.reference;
+        // Append exercise if it doesn't already exist
+        await docRef.update({
+          'exercises': FieldValue.arrayUnion([exercise])
+        });
+      } else {
+        // Create a new document if none exists
+        await FirebaseFirestore.instance.collection('letters').add({
+          'exercises': [exercise]
+        });
+      }
+    }
+  }
+
+  void _handlePaste() {
+    setState(() {
+      var exercisesToPaste = selectedExercises.values.map((exercise) {
+        exercise['isPasted'] = true;
+        return exercise;
+      }).toList();
+
+      pastedExercises.addAll(exercisesToPaste);
+      selectedExercises.clear();
+      _savePastedExercises().then((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Exercises pasted successfully')),
+        );
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to paste exercises: $error')),
+        );
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -195,8 +272,8 @@ class ImageSelection extends StatelessWidget {
             if (data.containsKey('exercises')) {
               var exercises = data['exercises'] as List<dynamic>? ?? [];
               for (var exercise in exercises) {
-                if (exercise['levelSubCategory'] == categoryName &&
-                    exercise['levelCategory'] == level) {
+                if (exercise['levelSubCategory'] == widget.categoryName &&
+                    exercise['levelCategory'] == widget.level) {
                   filteredExercises.add(exercise);
                 }
               }
@@ -250,72 +327,99 @@ class ImageSelection extends StatelessWidget {
               int crossAxisCount = (constraints.maxWidth / itemWidth).floor();
               crossAxisCount = crossAxisCount < 4 ? 4 : crossAxisCount;
 
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount, // Minimum 4 items
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  // childAspectRatio: 1, // Adjust to control height/width ratio
-                ),
-                itemCount: filteredExercises.length,
-                itemBuilder: (BuildContext context, int index) {
-                  var exercise = filteredExercises[index];
-
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (builder) => LessonDetail(
-                            audio: exercise['audioURL'] ?? "No Audio",
-                            categoryName:
-                                exercise['levelCategory'] ?? "No Category",
-                            image: exercise['photoURL'] ?? "No Image Available",
-                            id: exercise['uuid'] ?? "No ID",
-                            letter: exercise['characterName'] ?? "Unknown",
-                          ),
-                        ),
-                      );
-                    },
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+              return Column(
+                children: [
+                  SizedBox(
+                    height: 500,
+                    child: GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount, // Minimum 4 items
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        // childAspectRatio: 1, // Adjust to control height/width ratio
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Display image from photoURL
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              exercise['photoURL'] ??
-                                  'https://via.placeholder.com/90', // Placeholder image
-                              height: 70,
-                              width: 80,
-                              fit: BoxFit.cover,
+                      itemCount: filteredExercises.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        var exercise = filteredExercises[index];
+                        String exerciseId = exercise['uuid'] ?? '';
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (builder) => LessonDetail(
+                                  audio: exercise['audioURL'] ?? "No Audio",
+                                  categoryName: exercise['levelCategory'] ??
+                                      "No Category",
+                                  image: exercise['photoURL'] ??
+                                      "No Image Available",
+                                  id: exercise['uuid'] ?? "No ID",
+                                  letter:
+                                      exercise['characterName'] ?? "Unknown",
+                                ),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Checkbox(
+                                  value:
+                                      selectedExercises.containsKey(exerciseId),
+                                  onChanged: (bool? value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        selectedExercises[exerciseId] =
+                                            exercise;
+                                      } else {
+                                        selectedExercises.remove(exerciseId);
+                                      }
+                                    });
+                                  },
+                                ),
+                                // Display image from photoURL
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    exercise['photoURL'] ??
+                                        'https://via.placeholder.com/90', // Placeholder image
+                                    height: 70,
+                                    width: 80,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}",
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                // Character Name
+                                Text(
+                                  "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}",
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          // Character Name
-                          Text(
-                            "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
+                  ),
+                  ElevatedButton(
+                    onPressed: _handlePaste,
+                    child: Text("Paste"),
+                  ),
+                ],
               );
             },
           );
