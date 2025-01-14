@@ -1,16 +1,15 @@
-import 'package:brightminds_admin/screens/main_screen/add/add_categories.dart';
 import 'package:brightminds_admin/screens/main_screen/view/view_category.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 
 class CategoryLevelWise extends StatefulWidget {
   final String level;
 
-  CategoryLevelWise({super.key, required this.level});
+  CategoryLevelWise({Key? key, required this.level}) : super(key: key);
 
   @override
-  State<CategoryLevelWise> createState() => _CategoryLevelWiseState();
+  _CategoryLevelWiseState createState() => _CategoryLevelWiseState();
 }
 
 class _CategoryLevelWiseState extends State<CategoryLevelWise> {
@@ -24,142 +23,110 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
-          Navigator.push(
-              context, MaterialPageRoute(builder: (builder) => AddCategory()));
+          // Navigate to add new category screen
         },
       ),
       appBar: AppBar(
-        actions: [
-          TextButton(
-            onPressed: pasteData,
-            child: Text("Paste"),
-          ),
-        ],
         title: Text("Category Level: ${widget.level}"),
       ),
-      body: StreamBuilder(
-        stream: FirebaseFirestore.instance
-            .collection("categories")
-            .where("level", isEqualTo: widget.level)
-            .snapshots(),
-        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection("categories")
+                  .where("level", isEqualTo: widget.level)
+                  .snapshots(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(
-              child: Text('Currently No Provider Available in Our System'),
-            );
-          }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(child: Text('No categories available.'));
+                }
 
-          var data = snapshot.data!.docs;
-          List<DocumentSnapshot> sortedData = List.from(data);
-          sortedData.sort((a, b) {
-            var aName =
-                (a.data() as Map<String, dynamic>)['categoryName'] ?? '';
-            var bName =
-                (b.data() as Map<String, dynamic>)['categoryName'] ?? '';
-            return aName
-                .toString()
-                .toLowerCase()
-                .compareTo(bName.toString().toLowerCase());
-          });
+                var data = snapshot.data!.docs;
+                List<DocumentSnapshot> sortedData = List.from(data);
+                sortedData.sort((a, b) {
+                  var aName =
+                      (a.data() as Map<String, dynamic>)['categoryName'] ?? '';
+                  var bName =
+                      (b.data() as Map<String, dynamic>)['categoryName'] ?? '';
+                  return aName
+                      .toString()
+                      .toLowerCase()
+                      .compareTo(bName.toString().toLowerCase());
+                });
 
-          categorySnapshot = snapshot.data;
+                categorySnapshot = snapshot.data;
 
-          // Synchronize the size of selectedItems with the sortedData length
-          if (selectedItems.length != sortedData.length) {
-            selectedItems = List<bool>.filled(sortedData.length, false);
-          }
+                if (selectedItems.length != sortedData.length) {
+                  selectedItems = List<bool>.filled(sortedData.length, false);
+                }
 
-          return LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              int columns = (constraints.maxWidth / 300).floor();
+                return GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4, // Number of columns in the grid
+                    crossAxisSpacing: 8.0, // Horizontal spacing between tiles
+                    mainAxisSpacing: 8.0, // Vertical spacing between tiles
+                    childAspectRatio: 3 / 2, // Aspect ratio of each tile
+                  ),
+                  itemCount: sortedData.length,
+                  itemBuilder: (context, index) {
+                    var documentData =
+                        sortedData[index].data() as Map<String, dynamic>;
 
-              return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  crossAxisSpacing: 8.0,
-                  mainAxisSpacing: 8.0,
-                ),
-                itemCount: sortedData.length,
-                itemBuilder: (BuildContext context, int index) {
-                  var documentData =
-                      sortedData[index].data() as Map<String, dynamic>;
-
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                    return Card(
+                      margin: EdgeInsets.all(8.0),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Checkbox(
-                            value: selectedItems[index],
-                            onChanged: (bool? value) {
-                              setState(() {
-                                selectedItems[index] = value!;
-                                if (value) {
-                                  copiedData.add(documentData);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Copied: ${documentData['categoryName']}'),
-                                    ),
-                                  );
-                                } else {
-                                  copiedData.remove(documentData);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                          'Removed: ${documentData['categoryName']} from copy'),
-                                    ),
-                                  );
-                                }
-                              });
-                            },
-                          ),
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 8, right: 8),
-                              child: ClipRRect(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(12)),
-                                child: Image.network(
-                                  height: 80,
-                                  width: 90,
-                                  fit: BoxFit.cover,
-                                  documentData['photoURL'],
-                                ),
-                              ),
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(
+                              documentData['photoURL'],
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Text(
-                                "Level Name: " + documentData['level'],
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Checkbox(
+                                value: selectedItems[index],
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    selectedItems[index] = value!;
+                                    if (value) {
+                                      copiedData.add(documentData);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Copied: ${documentData['categoryName']}'),
+                                        ),
+                                      );
+                                    } else {
+                                      copiedData.remove(documentData);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Removed: ${documentData['categoryName']} from copy'),
+                                        ),
+                                      );
+                                    }
+                                  });
+                                },
                               ),
-                            ),
+                              Text("Copy Select Data"), // Added text
+                            ],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Align(
-                              alignment: Alignment.topLeft,
-                              child: Text(
-                                documentData['categoryName'],
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
+                          Text(documentData['categoryName'],
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text("Level: ${documentData['level']}",
+                              style: TextStyle(color: Colors.grey)),
                           TextButton(
                               onPressed: () {
                                 Navigator.push(
@@ -176,18 +143,42 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
                               child: Text("View Detail"))
                         ],
                       ),
-                    ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.all(8.0),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Wrap(
+                spacing: 14.0,
+                children: [
+                  'Pre-Kindergarten',
+                  'Kindergarten',
+                  'Level 1',
+                  'Level 2',
+                  'Level 3',
+                  'Level 4',
+                  'Level 5',
+                  'Level 6',
+                ].map((level) {
+                  return ElevatedButton(
+                    onPressed: () => pasteData(level),
+                    child: Text('Paste to $level'),
                   );
-                },
-              );
-            },
-          );
-        },
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  void pasteData() async {
+  void pasteData(String targetLevel) async {
     if (copiedData.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No data copied!')),
@@ -200,8 +191,8 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
       var newData = {
         ...data,
         'uuid': uuid,
-        'level': widget.level, // Update the level field to the current level
-      };
+        'level': targetLevel
+      }; // Update level
       await FirebaseFirestore.instance
           .collection('categories')
           .doc(uuid) // Use the new UUID as the document ID
@@ -209,9 +200,7 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content:
-              Text('Data pasted successfully into level ${widget.level}!')),
+      SnackBar(content: Text('Data pasted successfully to $targetLevel!')),
     );
   }
 }
