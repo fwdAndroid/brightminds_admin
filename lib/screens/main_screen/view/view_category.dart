@@ -191,13 +191,17 @@ class ImageSelection extends StatelessWidget {
 
           // Process each document in 'letters'
           for (var doc in snapshot.data!.docs) {
-            var exercises = doc['exercises'] as List<dynamic>? ?? [];
-            for (var exercise in exercises) {
-              // Match levelSubCategory with categoryName
-              if (exercise['levelSubCategory'] == categoryName &&
-                  exercise['levelCategory'] == level) {
-                filteredExercises.add(exercise);
+            var data = doc.data() as Map<String, dynamic>;
+            if (data.containsKey('exercises')) {
+              var exercises = data['exercises'] as List<dynamic>? ?? [];
+              for (var exercise in exercises) {
+                if (exercise['levelSubCategory'] == categoryName &&
+                    exercise['levelCategory'] == level) {
+                  filteredExercises.add(exercise);
+                }
               }
+            } else {
+              print("Document ${doc.id} does not have 'exercises' field");
             }
           }
 
