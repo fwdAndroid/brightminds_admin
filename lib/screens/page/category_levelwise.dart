@@ -83,7 +83,7 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           CircleAvatar(
-                            radius: 30,
+                            radius: 20,
                             backgroundImage: NetworkImage(
                               documentData['photoURL'],
                             ),

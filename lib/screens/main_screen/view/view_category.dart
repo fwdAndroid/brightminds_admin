@@ -174,73 +174,62 @@ class ImageSelection extends StatefulWidget {
 class _ImageSelectionState extends State<ImageSelection> {
   Map<String, Map<String, dynamic>> selectedExercises = {};
   List<Map<String, dynamic>> pastedExercises = [];
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _loadPastedExercises();
-  // }
 
-  // Future<void> _loadPastedExercises() async {
-  //   // Load pasted exercises from Firestore under the letters collection
-  //   final snapshot =
-  //       await FirebaseFirestore.instance.collection('letters').get();
-  //   setState(() {
-  //     for (var doc in snapshot.docs) {
-  //       var data = doc.data();
-  //       if (data.containsKey('exercises')) {
-  //         var exercises = data['exercises'] as List<dynamic>;
-  //         for (var exercise in exercises) {
-  //           if (exercise['isPasted'] == true) {
-  //             pastedExercises.add(exercise);
-  //           }
-  //         }
-  //       }
-  //     }
-  //   });
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _loadPastedExercises();
+  }
 
-  Future<void> _savePastedExercises() async {
-    for (var exercise in pastedExercises) {
-      String uuid = exercise['uuid'];
-
-      // Check if a document exists for this exercise
-      var querySnapshot = await FirebaseFirestore.instance
-          .collection('letters')
-          .where('exercises', arrayContains: {'uuid': uuid}).get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        var docRef = querySnapshot.docs.first.reference;
-        // Append exercise if it doesn't already exist
-        await docRef.update({
-          'exercises': FieldValue.arrayUnion([exercise])
-        });
-      } else {
-        // Create a new document if none exists
-        await FirebaseFirestore.instance.collection('letters').add({
-          'exercises': [exercise]
-        });
+  Future<void> _loadPastedExercises() async {
+    final snapshot =
+        await FirebaseFirestore.instance.collection('letters').get();
+    setState(() {
+      for (var doc in snapshot.docs) {
+        var data = doc.data();
+        if (data.containsKey('exercises')) {
+          var exercises = data['exercises'] as List<dynamic>;
+          for (var exercise in exercises) {
+            if (exercise['isPasted'] == true) {
+              pastedExercises.add(exercise);
+            }
+          }
+        }
       }
+    });
+  }
+
+  Future<void> _savePastedExercises(
+      List<Map<String, dynamic>> exercises, String category) async {
+    for (var exercise in exercises) {
+      exercise['levelCategory'] = category;
+      await FirebaseFirestore.instance.collection('letters').add({
+        'exercises': [exercise]
+      });
     }
   }
 
-  void _handlePaste() {
+  void _handlePaste(List<String> targetCategories) {
     setState(() {
       var exercisesToPaste = selectedExercises.values.map((exercise) {
-        exercise['isPasted'] = true;
-        return exercise;
+        String newId =
+            FirebaseFirestore.instance.collection('letters').doc().id;
+        var newExercise = Map<String, dynamic>.from(exercise);
+        newExercise['uuid'] = newId;
+        newExercise['isPasted'] = true;
+        return newExercise;
       }).toList();
 
       pastedExercises.addAll(exercisesToPaste);
       selectedExercises.clear();
-      _savePastedExercises().then((_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Exercises pasted successfully')),
-        );
-      }).catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to paste exercises: $error')),
-        );
-      });
+
+      for (var category in targetCategories) {
+        _savePastedExercises(exercisesToPaste, category);
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Exercises pasted successfully')),
+      );
     });
   }
 
@@ -416,7 +405,19 @@ class _ImageSelectionState extends State<ImageSelection> {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: _handlePaste,
+                    onPressed: () {
+                      List<String> targetCategories = [
+                        'Pre-Kindergarten',
+                        'Kindergarten',
+                        'Level 1',
+                        'Level 2',
+                        'Level 3',
+                        'Level 4',
+                        'Level 5',
+                        'Level 6',
+                      ];
+                      _handlePaste(targetCategories);
+                    },
                     child: Text("Paste"),
                   ),
                 ],
