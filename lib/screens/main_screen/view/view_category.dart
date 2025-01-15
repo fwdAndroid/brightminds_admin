@@ -6,6 +6,7 @@ import 'package:brightminds_admin/utils/buttons.dart';
 import 'package:brightminds_admin/utils/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 class ViewCategory extends StatefulWidget {
   String categoryName;
@@ -172,66 +173,7 @@ class ImageSelection extends StatefulWidget {
 }
 
 class _ImageSelectionState extends State<ImageSelection> {
-  Map<String, Map<String, dynamic>> selectedExercises = {};
-  List<Map<String, dynamic>> pastedExercises = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPastedExercises();
-  }
-
-  Future<void> _loadPastedExercises() async {
-    final snapshot =
-        await FirebaseFirestore.instance.collection('letters').get();
-    setState(() {
-      for (var doc in snapshot.docs) {
-        var data = doc.data();
-        if (data.containsKey('exercises')) {
-          var exercises = data['exercises'] as List<dynamic>;
-          for (var exercise in exercises) {
-            if (exercise['isPasted'] == true) {
-              pastedExercises.add(exercise);
-            }
-          }
-        }
-      }
-    });
-  }
-
-  Future<void> _savePastedExercises(
-      List<Map<String, dynamic>> exercises, String category) async {
-    for (var exercise in exercises) {
-      exercise['levelCategory'] = category;
-      await FirebaseFirestore.instance.collection('letters').add({
-        'exercises': [exercise]
-      });
-    }
-  }
-
-  void _handlePaste(List<String> targetCategories) {
-    setState(() {
-      var exercisesToPaste = selectedExercises.values.map((exercise) {
-        String newId =
-            FirebaseFirestore.instance.collection('letters').doc().id;
-        var newExercise = Map<String, dynamic>.from(exercise);
-        newExercise['uuid'] = newId;
-        newExercise['isPasted'] = true;
-        return newExercise;
-      }).toList();
-
-      pastedExercises.addAll(exercisesToPaste);
-      selectedExercises.clear();
-
-      for (var category in targetCategories) {
-        _savePastedExercises(exercisesToPaste, category);
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Exercises pasted successfully')),
-      );
-    });
-  }
+  Map<String, dynamic> selectedExercise = {};
 
   @override
   Widget build(BuildContext context) {
@@ -240,38 +182,41 @@ class _ImageSelectionState extends State<ImageSelection> {
       child: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('letters').snapshots(),
         builder: (BuildContext context, snapshot) {
-          // Error handling
           if (snapshot.hasError) {
             return Center(
               child: Text('Error: ${snapshot.error}'),
             );
           }
 
-          // Show loading spinner
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // If no data is found
           List<Map<String, dynamic>> filteredExercises = [];
 
-          // Process each document in 'letters'
           for (var doc in snapshot.data!.docs) {
             var data = doc.data() as Map<String, dynamic>;
             if (data.containsKey('exercises')) {
-              var exercises = data['exercises'] as List<dynamic>? ?? [];
-              for (var exercise in exercises) {
-                if (exercise['levelSubCategory'] == widget.categoryName &&
-                    exercise['levelCategory'] == widget.level) {
-                  filteredExercises.add(exercise);
+              var exercises = data['exercises'];
+              if (exercises is List) {
+                for (var exercise in exercises) {
+                  if (exercise['levelSubCategory'] == widget.categoryName &&
+                      exercise['levelCategory'] == widget.level) {
+                    filteredExercises.add({
+                      'docId': doc.id,
+                      'exercise': exercise,
+                    });
+                  }
                 }
               }
-            } else {
-              print("Document ${doc.id} does not have 'exercises' field");
             }
           }
 
-          // Sort the exercises by numeric and alphabetic sequence
+          if (filteredExercises.isEmpty) {
+            return const Center(
+              child: Text('No Exercises Found'),
+            );
+          }
           filteredExercises.sort((a, b) {
             int parseOrder(String? characterName) {
               // Extract number from the beginning of the string
@@ -302,127 +247,172 @@ class _ImageSelectionState extends State<ImageSelection> {
                 .compareTo(parseString(b['characterName']));
           });
 
-          // If no exercises are found
           if (filteredExercises.isEmpty) {
             return const Center(
               child: Text('No Exercises Found'),
             );
           }
 
-          return LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              // Dynamically calculate the number of columns based on screen width
-              double itemWidth = 200; // Set your desired item width
-              int crossAxisCount = (constraints.maxWidth / itemWidth).floor();
-              crossAxisCount = crossAxisCount < 4 ? 4 : crossAxisCount;
-
-              return Column(
-                children: [
-                  SizedBox(
-                    height: 500,
-                    child: GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount, // Minimum 4 items
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        // childAspectRatio: 1, // Adjust to control height/width ratio
-                      ),
-                      itemCount: filteredExercises.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        var exercise = filteredExercises[index];
-                        String exerciseId = exercise['uuid'] ?? '';
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (builder) => LessonDetail(
-                                  audio: exercise['audioURL'] ?? "No Audio",
-                                  categoryName: exercise['levelCategory'] ??
-                                      "No Category",
-                                  image: exercise['photoURL'] ??
-                                      "No Image Available",
-                                  id: exercise['uuid'] ?? "No ID",
-                                  letter:
-                                      exercise['characterName'] ?? "Unknown",
-                                ),
-                              ),
-                            );
-                          },
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Checkbox(
-                                  value:
-                                      selectedExercises.containsKey(exerciseId),
-                                  onChanged: (bool? value) {
-                                    setState(() {
-                                      if (value == true) {
-                                        selectedExercises[exerciseId] =
-                                            exercise;
-                                      } else {
-                                        selectedExercises.remove(exerciseId);
-                                      }
-                                    });
-                                  },
-                                ),
-                                // Display image from photoURL
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    exercise['photoURL'] ??
-                                        'https://via.placeholder.com/90', // Placeholder image
-                                    height: 70,
-                                    width: 80,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}",
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                // Character Name
-                                Text(
-                                  "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+          return Column(
+            children: [
+              SizedBox(
+                height: 500,
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    crossAxisSpacing: 14,
+                    mainAxisSpacing: 14,
+                  ),
+                  itemCount: filteredExercises.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    var item = filteredExercises[index];
+                    var exercise = item['exercise'];
+                    String exerciseId = exercise['uuid'] ?? '';
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (builder) => LessonDetail(
+                              audio: exercise['audioURL'] ?? "No Audio",
+                              categoryName:
+                                  exercise['levelCategory'] ?? "No Category",
+                              image:
+                                  exercise['photoURL'] ?? "No Image Available",
+                              id: exercise['uuid'] ?? "No ID",
+                              letter: exercise['characterName'] ?? "Unknown",
                             ),
                           ),
                         );
                       },
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      List<String> targetCategories = [
-                        'Pre-Kindergarten',
-                        'Kindergarten',
-                        'Level 1',
-                        'Level 2',
-                        'Level 3',
-                        'Level 4',
-                        'Level 5',
-                        'Level 6',
-                      ];
-                      _handlePaste(targetCategories);
-                    },
-                    child: Text("Paste"),
-                  ),
-                ],
-              );
-            },
+                      child: Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                exercise['photoURL'] ??
+                                    'https://via.placeholder.com/90',
+                                height: 50,
+                                width: 80,
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}",
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Checkbox(
+                              value: selectedExercise.containsKey(exerciseId),
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedExercise['docId'] = item['docId'];
+                                    selectedExercise['exercise'] = exercise;
+
+                                    // Print the details of the selected exercise
+                                    print("Exercise copied:");
+                                    exercise.forEach((key, value) {
+                                      print("$key: $value");
+                                    });
+
+                                    // Show confirmation in a SnackBar
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Exercise copied: ${exercise['characterName']}'),
+                                        duration: Duration(seconds: 5),
+                                      ),
+                                    );
+                                  } else {
+                                    selectedExercise.clear();
+                                  }
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (selectedExercise.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('No exercise selected')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    if (selectedExercise['exercise'] == null ||
+                        selectedExercise['exercise'] is! Map) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Invalid exercise data')),
+                      );
+                      return;
+                    }
+
+                    var uuid = Uuid();
+                    String newDocId =
+                        uuid.v4(); // Generate a new UUID for the new document
+                    String newUuid =
+                        uuid.v4(); // Generate a new UUID for the exercise
+
+                    var newExercise =
+                        Map<String, dynamic>.from(selectedExercise['exercise']);
+                    newExercise['uuid'] = newUuid;
+
+                    await FirebaseFirestore.instance
+                        .collection('letters')
+                        .doc(
+                            newDocId) // Create a new document with the new UUID
+                        .set({
+                      'exercises': [
+                        newExercise
+                      ], // Add the duplicated exercise in an array
+                    });
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content:
+                            Text('Exercise duplicated with UUID: $newUuid'),
+                        duration: Duration(seconds: 5),
+                      ),
+                    );
+                    print("Exercise pasted with UUID: $newUuid");
+
+                    setState(() {
+                      selectedExercise.clear();
+                    });
+                  } catch (e) {
+                    print("Error duplicating exercise: $e");
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Failed to duplicate exercise $e')),
+                    );
+                  }
+                },
+                child: Text("Paste"),
+              ),
+            ],
           );
         },
       ),
