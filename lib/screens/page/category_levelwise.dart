@@ -1,3 +1,4 @@
+import 'package:brightminds_admin/screens/main_screen/add/add_categories.dart';
 import 'package:brightminds_admin/screens/main_screen/view/view_category.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,6 +25,8 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
         child: Icon(Icons.add),
         onPressed: () {
           // Navigate to add new category screen
+          Navigator.push(
+              context, MaterialPageRoute(builder: (builder) => AddCategory()));
         },
       ),
       appBar: AppBar(

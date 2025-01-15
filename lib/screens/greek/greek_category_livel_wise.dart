@@ -2,6 +2,7 @@ import 'package:brightminds_admin/screens/greek/add_catgory_widget_level_wise.da
 import 'package:brightminds_admin/screens/main_screen/view/view_category.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 class GreekCategoryLevelWise extends StatefulWidget {
   String level;
@@ -12,12 +13,17 @@ class GreekCategoryLevelWise extends StatefulWidget {
 }
 
 class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
+  List<Map<String, dynamic>> copiedData = [];
+  List<bool> selectedItems = [];
+  QuerySnapshot? categorySnapshot;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
+          // Navigate to add new category screen
           Navigator.push(
               context,
               MaterialPageRoute(
@@ -25,114 +31,181 @@ class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
                       AddCatgoryWidgetLevelWise(level: widget.level)));
         },
       ),
-      appBar: AppBar(),
-      body: StreamBuilder(
-          stream: FirebaseFirestore.instance
-              .collection("categories")
-              .where("level", isEqualTo: widget.level)
-              .snapshots(),
-          builder:
-              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            }
+      appBar: AppBar(
+        title: Text("Category Level: ${widget.level}"),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection("categories")
+                  .where("level", isEqualTo: widget.level)
+                  .snapshots(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(child: Text('No categories available.'));
+                }
 
-            var data = snapshot.data!.docs;
-            if (data.isEmpty) {
-              // No records found
-              return Center(
-                child: Text('Currently No Provider Available in Our System'),
-              );
-            }
-            return LayoutBuilder(
-              builder: (BuildContext context, BoxConstraints constraints) {
-                // Calculate the number of columns based on available width
-                int columns = (constraints.maxWidth / 300)
-                    .floor(); // Assuming each item has a width of 200
+                var data = snapshot.data!.docs;
+                List<DocumentSnapshot> sortedData = List.from(data);
+                sortedData.sort((a, b) {
+                  var aName =
+                      (a.data() as Map<String, dynamic>)['categoryName'] ?? '';
+                  var bName =
+                      (b.data() as Map<String, dynamic>)['categoryName'] ?? '';
+                  return aName
+                      .toString()
+                      .toLowerCase()
+                      .compareTo(bName.toString().toLowerCase());
+                });
+
+                categorySnapshot = snapshot.data;
+
+                if (selectedItems.length != sortedData.length) {
+                  selectedItems = List<bool>.filled(sortedData.length, false);
+                }
 
                 return GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: columns,
-                    crossAxisSpacing: 8.0,
-                    mainAxisSpacing: 8.0,
+                    crossAxisCount: 4, // Number of columns in the grid
+                    crossAxisSpacing: 8.0, // Horizontal spacing between tiles
+                    mainAxisSpacing: 8.0, // Vertical spacing between tiles
+                    childAspectRatio: 3 / 2, // Aspect ratio of each tile
                   ),
-                  itemCount: data.length,
-                  itemBuilder: (BuildContext context, int index) {
+                  itemCount: sortedData.length,
+                  itemBuilder: (context, index) {
                     var documentData =
-                        data[index].data() as Map<String, dynamic>;
-                    return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (builder) => ViewCategory(
-                                        level: documentData['level'],
-                                        id: documentData['uuid'],
-                                        categoryName:
-                                            documentData['categoryName'],
-                                        image: documentData['photoURL'])));
-                          },
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 8, right: 8),
-                                    child: ClipRRect(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(12)),
-                                      child: Image.network(
-                                        height: 80,
-                                        width: 90,
-                                        fit: BoxFit.cover,
-                                        documentData['photoURL'],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Align(
-                                    alignment: Alignment.topLeft,
-                                    child: Text(
-                                      "Level Name: " + documentData['level'],
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Align(
-                                    alignment: Alignment.topLeft,
-                                    child: Text(
-                                      documentData['categoryName'],
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        sortedData[index].data() as Map<String, dynamic>;
+
+                    return Card(
+                      margin: EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundImage: NetworkImage(
+                              documentData['photoURL'],
                             ),
                           ),
-                        ));
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Checkbox(
+                                value: selectedItems[index],
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    selectedItems[index] = value!;
+                                    if (value) {
+                                      copiedData.add(documentData);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Copied: ${documentData['categoryName']}'),
+                                        ),
+                                      );
+                                    } else {
+                                      copiedData.remove(documentData);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Removed: ${documentData['categoryName']} from copy'),
+                                        ),
+                                      );
+                                    }
+                                  });
+                                },
+                              ),
+                              Text("Copy Select Data"), // Added text
+                            ],
+                          ),
+                          Text(documentData['categoryName'],
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text("Level: ${documentData['level']}",
+                              style: TextStyle(color: Colors.grey)),
+                          TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (builder) => ViewCategory(
+                                              id: documentData['uuid'],
+                                              categoryName:
+                                                  documentData['categoryName'],
+                                              level: documentData['level'],
+                                              image: documentData['photoURL'],
+                                            )));
+                              },
+                              child: Text("View Detail"))
+                        ],
+                      ),
+                    );
                   },
                 );
               },
-            );
-          }),
+            ),
+          ),
+          Container(
+            padding: EdgeInsets.all(8.0),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Wrap(
+                spacing: 14.0,
+                children: [
+                  'Προνήπιο',
+                  'Νηπιαγωγείο',
+                  'Επίπεδο 1',
+                  'Επίπεδο 2',
+                  'Επίπεδο 3',
+                  'Επίπεδο 4',
+                  'Επίπεδο 5',
+                  'Επίπεδο 6',
+                ].map((level) {
+                  return ElevatedButton(
+                    onPressed: () => pasteData(level),
+                    child: Text('Paste to $level'),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void pasteData(String targetLevel) async {
+    if (copiedData.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No data copied!')),
+      );
+      return;
+    }
+
+    for (var data in copiedData) {
+      var uuid = Uuid().v4(); // Generate a new UUID for each document
+      var newData = {
+        ...data,
+        'uuid': uuid,
+        'level': targetLevel
+      }; // Update level
+      await FirebaseFirestore.instance
+          .collection('categories')
+          .doc(uuid) // Use the new UUID as the document ID
+          .set(newData);
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Data pasted successfully to $targetLevel!')),
     );
   }
 }
