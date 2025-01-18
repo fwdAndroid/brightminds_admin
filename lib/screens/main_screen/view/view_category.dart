@@ -207,173 +207,177 @@ class _ImageSelectionState extends State<ImageSelection> {
       width: MediaQuery.of(context).size.width * 0.5,
       child: Column(
         children: [
-          StreamBuilder<QuerySnapshot>(
-            stream:
-                FirebaseFirestore.instance.collection('letters').snapshots(),
-            builder: (BuildContext context, snapshot) {
-              // Error handling
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text('Error: ${snapshot.error}'),
-                );
-              }
+          SizedBox(
+            height: 800,
+            child: StreamBuilder<QuerySnapshot>(
+              stream:
+                  FirebaseFirestore.instance.collection('letters').snapshots(),
+              builder: (BuildContext context, snapshot) {
+                // Error handling
+                if (snapshot.hasError) {
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
+                }
 
-              // Show loading spinner
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+                // Show loading spinner
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              // If no data is found
-              List<Map<String, dynamic>> filteredExercises = [];
+                // If no data is found
+                List<Map<String, dynamic>> filteredExercises = [];
 
-              // Process each document in 'letters'
-              for (var doc in snapshot.data!.docs) {
-                var exercises = doc['exercises'] as List<dynamic>? ?? [];
-                for (var exercise in exercises) {
-                  // Match levelSubCategory with categoryName
-                  if (exercise['levelSubCategory'] == widget.categoryName &&
-                      exercise['levelCategory'] == widget.level) {
-                    filteredExercises.add(exercise);
+                // Process each document in 'letters'
+                for (var doc in snapshot.data!.docs) {
+                  var exercises = doc['exercises'] as List<dynamic>? ?? [];
+                  for (var exercise in exercises) {
+                    // Match levelSubCategory with categoryName
+                    if (exercise['levelSubCategory'] == widget.categoryName &&
+                        exercise['levelCategory'] == widget.level) {
+                      filteredExercises.add(exercise);
+                    }
                   }
                 }
-              }
 
-              // Sort the exercises by numeric and alphabetic sequence
-              filteredExercises.sort((a, b) {
-                int parseOrder(String? characterName) {
-                  // Extract number from the beginning of the string
-                  final numberMatch =
-                      RegExp(r'^\d+').firstMatch(characterName ?? '');
-                  if (numberMatch != null) {
-                    return int.parse(
-                        numberMatch.group(0)!); // Return the number if found
+                // Sort the exercises by numeric and alphabetic sequence
+                filteredExercises.sort((a, b) {
+                  int parseOrder(String? characterName) {
+                    // Extract number from the beginning of the string
+                    final numberMatch =
+                        RegExp(r'^\d+').firstMatch(characterName ?? '');
+                    if (numberMatch != null) {
+                      return int.parse(
+                          numberMatch.group(0)!); // Return the number if found
+                    }
+                    // Non-numeric strings are treated as very large numbers
+                    return double.maxFinite.toInt();
                   }
-                  // Non-numeric strings are treated as very large numbers
-                  return double.maxFinite.toInt();
+
+                  String parseString(String? characterName) {
+                    // Return the string part in lowercase for sorting
+                    return characterName?.toLowerCase() ?? '';
+                  }
+
+                  // Compare numeric order first
+                  int orderA = parseOrder(a['characterName']);
+                  int orderB = parseOrder(b['characterName']);
+                  if (orderA != orderB) {
+                    return orderA.compareTo(orderB);
+                  }
+
+                  // If numeric values are equal, compare alphabetically
+                  return parseString(a['characterName'])
+                      .compareTo(parseString(b['characterName']));
+                });
+
+                // If no exercises are found
+                if (filteredExercises.isEmpty) {
+                  return const Center(
+                    child: Text('No Exercises Found'),
+                  );
                 }
 
-                String parseString(String? characterName) {
-                  // Return the string part in lowercase for sorting
-                  return characterName?.toLowerCase() ?? '';
-                }
+                return LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    // Dynamically calculate the number of columns based on screen width
+                    double itemWidth = 200; // Set your desired item width
+                    int crossAxisCount =
+                        (constraints.maxWidth / itemWidth).floor();
+                    crossAxisCount = crossAxisCount < 4 ? 4 : crossAxisCount;
 
-                // Compare numeric order first
-                int orderA = parseOrder(a['characterName']);
-                int orderB = parseOrder(b['characterName']);
-                if (orderA != orderB) {
-                  return orderA.compareTo(orderB);
-                }
-
-                // If numeric values are equal, compare alphabetically
-                return parseString(a['characterName'])
-                    .compareTo(parseString(b['characterName']));
-              });
-
-              // If no exercises are found
-              if (filteredExercises.isEmpty) {
-                return const Center(
-                  child: Text('No Exercises Found'),
-                );
-              }
-
-              return LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) {
-                  // Dynamically calculate the number of columns based on screen width
-                  double itemWidth = 200; // Set your desired item width
-                  int crossAxisCount =
-                      (constraints.maxWidth / itemWidth).floor();
-                  crossAxisCount = crossAxisCount < 4 ? 4 : crossAxisCount;
-
-                  return GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: crossAxisCount, // Minimum 4 items
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      // childAspectRatio: 1, // Adjust to control height/width ratio
-                    ),
-                    itemCount: filteredExercises.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      var exercise = filteredExercises[index];
-                      bool isSelected = selectedExercises
-                          .any((e) => e['uuid'] == exercise['uuid']);
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (builder) => LessonDetail(
-                                audio: exercise['audioURL'] ?? "No Audio",
-                                categoryName:
-                                    exercise['levelCategory'] ?? "No Category",
-                                image: exercise['photoURL'] ??
-                                    "No Image Available",
-                                id: exercise['uuid'] ?? "No ID",
-                                letter: exercise['characterName'] ?? "Unknown",
+                    return GridView.builder(
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount, // Minimum 4 items
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        // childAspectRatio: 1, // Adjust to control height/width ratio
+                      ),
+                      itemCount: filteredExercises.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        var exercise = filteredExercises[index];
+                        bool isSelected = selectedExercises
+                            .any((e) => e['uuid'] == exercise['uuid']);
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (builder) => LessonDetail(
+                                  audio: exercise['audioURL'] ?? "No Audio",
+                                  categoryName: exercise['levelCategory'] ??
+                                      "No Category",
+                                  image: exercise['photoURL'] ??
+                                      "No Image Available",
+                                  id: exercise['uuid'] ?? "No ID",
+                                  letter:
+                                      exercise['characterName'] ?? "Unknown",
+                                ),
                               ),
+                            );
+                          },
+                          child: Card(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          );
-                        },
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Display image from photoURL
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  exercise['photoURL'] ??
-                                      'https://via.placeholder.com/90', // Placeholder image
-                                  height: 70,
-                                  width: 80,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}",
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              // Character Name
-                              Text(
-                                "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
-                                style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              if (isCopyMode)
-                                Positioned(
-                                  right: 8,
-                                  top: 8,
-                                  child: Checkbox(
-                                    value: isSelected,
-                                    onChanged: (bool? value) {
-                                      setState(() {
-                                        if (value == true) {
-                                          selectedExercises.add(exercise);
-                                        } else {
-                                          selectedExercises.removeWhere((e) =>
-                                              e['uuid'] == exercise['uuid']);
-                                        }
-                                      });
-                                    },
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Display image from photoURL
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    exercise['photoURL'] ??
+                                        'https://via.placeholder.com/90', // Placeholder image
+                                    height: 70,
+                                    width: 80,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
-                            ],
+                                const SizedBox(height: 8),
+                                Text(
+                                  "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}",
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                // Character Name
+                                Text(
+                                  "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                if (isCopyMode)
+                                  Positioned(
+                                    right: 8,
+                                    top: 8,
+                                    child: Checkbox(
+                                      value: isSelected,
+                                      onChanged: (bool? value) {
+                                        setState(() {
+                                          if (value == true) {
+                                            selectedExercises.add(exercise);
+                                          } else {
+                                            selectedExercises.removeWhere((e) =>
+                                                e['uuid'] == exercise['uuid']);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              );
-            },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

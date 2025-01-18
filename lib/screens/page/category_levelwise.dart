@@ -34,7 +34,8 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
       ),
       body: Column(
         children: [
-          Expanded(
+          SizedBox(
+            height: 600,
             child: StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection("categories")
@@ -152,7 +153,9 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
               },
             ),
           ),
+          Spacer(),
           Container(
+            height: 200,
             padding: EdgeInsets.all(8.0),
             child: Padding(
               padding: const EdgeInsets.all(8.0),

@@ -75,7 +75,6 @@ class FormSelection extends StatefulWidget {
 
 class _FormSelectionState extends State<FormSelection> {
   late TextEditingController _categoryNameController;
-  late TextEditingController _audioURLController;
   late TextEditingController _characterNameController;
 
   bool _isUpdating = false;
@@ -86,7 +85,6 @@ class _FormSelectionState extends State<FormSelection> {
   void initState() {
     super.initState();
     _categoryNameController = TextEditingController(text: widget.categoryName);
-    _audioURLController = TextEditingController(text: widget.audioURL);
     _characterNameController =
         TextEditingController(text: widget.characterName);
   }
@@ -132,8 +130,7 @@ class _FormSelectionState extends State<FormSelection> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Updated successfully!')),
       );
-      Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (builder) => WebHome()));
+      Navigator.pop(context);
     } catch (e) {
       print("Update error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
