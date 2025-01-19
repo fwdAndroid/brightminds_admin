@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:brightminds_admin/screens/main_screen/view/view_category.dart';
 import 'package:brightminds_admin/screens/main_screen/web_home.dart';
 import 'package:brightminds_admin/utils/buttons.dart';
 import 'package:brightminds_admin/utils/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 
 class EditLesson extends StatefulWidget {
@@ -87,6 +89,8 @@ class _FormSelectionState extends State<FormSelection> {
     _categoryNameController = TextEditingController(text: widget.categoryName);
     _characterNameController =
         TextEditingController(text: widget.characterName);
+
+    print(widget.id);
   }
 
   Future<void> _pickImage() async {
@@ -111,30 +115,56 @@ class _FormSelectionState extends State<FormSelection> {
     }
   }
 
-  Future<void> _updateCategory() async {
+  Future<void> _updateExercise() async {
     setState(() {
       _isUpdating = true;
     });
 
     try {
+      // Step 1: Fetch the current document containing the exercises array
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('letters')
+          .doc(widget.id)
+          .get();
+
+      List<dynamic> exercises =
+          doc['exercises'] ?? []; // Get the exercises array
+
+      // Step 2: Update the specific object inside the array
+      for (int i = 0; i < exercises.length; i++) {
+        var exercise = exercises[i];
+        // Identify the object to update (example: match by 'characterName')
+        if (exercise['characterName'] == widget.characterName) {
+          // Update fields as needed
+          if (_selectedAudioPath != null) {
+            exercise['audioURL'] = _selectedAudioPath; // Update audioURL
+          }
+          if (_selectedImagePath != null) {
+            exercise['photoURL'] = _selectedImagePath; // Update image
+          }
+          exercise['characterName'] =
+              _characterNameController.text; // Update characterName
+          exercises[i] = exercise; // Update the object in the array
+        }
+      }
+
+      // Step 3: Write the updated array back to Firestore
       await FirebaseFirestore.instance
           .collection('letters')
           .doc(widget.id)
           .update({
-        'categoryName': _categoryNameController.text,
-        'audioURL': _selectedAudioPath ?? widget.audioURL,
-        'characterName': _characterNameController.text,
-        if (_selectedImagePath != null) 'image': _selectedImagePath,
+        'exercises': exercises,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Updated successfully!')),
+        SnackBar(content: Text('Exercise updated successfully!')),
       );
-      Navigator.pop(context);
+      Navigator.push(
+          context, MaterialPageRoute(builder: (builder) => WebHome()));
     } catch (e) {
-      print("Update error: $e");
+      print("Error updating exercise: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating category.')),
+        SnackBar(content: Text('Failed to update exercise.')),
       );
     } finally {
       setState(() {
@@ -186,7 +216,7 @@ class _FormSelectionState extends State<FormSelection> {
           ),
           SaveButton(
             title: "Update",
-            onTap: _updateCategory,
+            onTap: _updateExercise,
             color: mainBtnColor,
           ),
           if (_isUpdating) CircularProgressIndicator(),

@@ -351,10 +351,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                                   ),
                                 ),
                                 if (isCopyMode)
-                                  Positioned(
-                                    right: 8,
-                                    top: 8,
-                                    child: Checkbox(
+                                   Checkbox(
                                       value: isSelected,
                                       onChanged: (bool? value) {
                                         setState(() {
@@ -366,7 +363,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                                           }
                                         });
                                       },
-                                    ),
+                                    
                                   ),
                               ],
                             ),
