@@ -185,15 +185,6 @@ class _ImageSelectionState extends State<ImageSelection> {
     fetchDropdownData();
   }
 
-  void toggleCopyMode() {
-    setState(() {
-      isCopyMode = !isCopyMode;
-      if (!isCopyMode) {
-        selectedExercises.clear(); // Clear selection when exiting copy mode
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -219,6 +210,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                 }
 
                 // If no data is found
+                allExercises.clear();
                 List<Map<String, dynamic>> filteredExercises = [];
 
                 // Process each document in 'letters'
@@ -229,6 +221,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                     if (exercise['levelSubCategory'] == widget.categoryName &&
                         exercise['levelCategory'] == widget.level) {
                       filteredExercises.add(exercise);
+                      allExercises.add(exercise);
                     }
                   }
                 }
@@ -331,17 +324,33 @@ class _ImageSelectionState extends State<ImageSelection> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SaveButton(
-                  color: mainBtnColor,
-                  onTap: toggleCopyMode,
-                  title: isCopyMode ? 'Cancel Copy' : 'Copy',
+                SizedBox(
+                  width: 200,
+                  child: SaveButton(
+                    color: mainBtnColor,
+                    onTap: toggleCopyMode,
+                    title: isCopyMode ? 'Cancel Copy' : 'Copy',
+                  ),
                 ),
                 const SizedBox(width: 16),
                 if (isCopyMode && selectedExercises.isNotEmpty)
-                  SaveButton(
-                    color: mainBtnColor,
-                    onTap: openPasteDialog,
-                    title: 'Paste',
+                  SizedBox(
+                    width: 200,
+                    child: SaveButton(
+                      color: mainBtnColor,
+                      onTap: openPasteDialog,
+                      title: 'Paste',
+                    ),
+                  ),
+                const SizedBox(width: 16),
+                if (isCopyMode)
+                  SizedBox(
+                    width: 200,
+                    child: SaveButton(
+                      color: mainBtnColor,
+                      onTap: copyAllExercises,
+                      title: 'Copy All',
+                    ),
                   ),
               ],
             ),
@@ -487,6 +496,13 @@ class _ImageSelectionState extends State<ImageSelection> {
     );
   }
 
+  List<Map<String, dynamic>> allExercises = [];
+  void copyAllExercises() {
+    setState(() {
+      selectedExercises = List.from(allExercises);
+    });
+  }
+
   void duplicateExercises(
     BuildContext context,
     String? selectedLevel,
@@ -528,5 +544,14 @@ class _ImageSelectionState extends State<ImageSelection> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Exercises duplicated successfully!')),
     );
+  }
+
+  void toggleCopyMode() {
+    setState(() {
+      isCopyMode = !isCopyMode;
+      if (!isCopyMode) {
+        selectedExercises.clear(); // Clear selection when exiting copy mode
+      }
+    });
   }
 }
