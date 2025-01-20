@@ -172,9 +172,30 @@ class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: copyAll,
+              child: Text("Copy All"),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void copyAll() {
+    setState(() {
+      copiedData.clear();
+      selectedItems.fillRange(0, selectedItems.length, true);
+      categorySnapshot!.docs.forEach((doc) {
+        var data = doc.data() as Map<String, dynamic>;
+        copiedData.add(data);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('All categories copied!')),
+      );
+    });
   }
 
   void pasteData(String targetLevel) async {

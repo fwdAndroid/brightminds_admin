@@ -58,7 +58,7 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
       body: Column(
         children: [
           SizedBox(
-            height: 460,
+            height: 440,
             child: StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection("categories")
@@ -170,9 +170,30 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
               },
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: copyAll,
+              child: Text("Copy All"),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void copyAll() {
+    setState(() {
+      copiedData.clear();
+      selectedItems.fillRange(0, selectedItems.length, true);
+      categorySnapshot!.docs.forEach((doc) {
+        var data = doc.data() as Map<String, dynamic>;
+        copiedData.add(data);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('All categories copied!')),
+      );
+    });
   }
 
   void pasteData(String targetLevel) async {
