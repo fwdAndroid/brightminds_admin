@@ -26,13 +26,6 @@ class ViewCategory extends StatefulWidget {
 
 class _ViewCategoryState extends State<ViewCategory> {
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    print(widget.level);
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -204,11 +197,11 @@ class _ImageSelectionState extends State<ImageSelection> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: MediaQuery.of(context).size.width * 0.5,
+      width: MediaQuery.of(context).size.width * 0.6,
       child: Column(
         children: [
           SizedBox(
-            height: 800,
+            height: 500,
             child: StreamBuilder<QuerySnapshot>(
               stream:
                   FirebaseFirestore.instance.collection('letters').snapshots(),
@@ -278,116 +271,80 @@ class _ImageSelectionState extends State<ImageSelection> {
                   );
                 }
 
-                return LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    // Dynamically calculate the number of columns based on screen width
-                    double itemWidth = 200; // Set your desired item width
-                    int crossAxisCount =
-                        (constraints.maxWidth / itemWidth).floor();
-                    crossAxisCount = crossAxisCount < 4 ? 4 : crossAxisCount;
-
-                    return GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount, // Minimum 4 items
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                        // childAspectRatio: 1, // Adjust to control height/width ratio
-                      ),
-                      itemCount: filteredExercises.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        var exercise = filteredExercises[index];
-                        bool isSelected = selectedExercises
-                            .any((e) => e['uuid'] == exercise['uuid']);
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (builder) => LessonDetail(
-                                  audio: exercise['audioURL'] ?? "No Audio",
-                                  categoryName: exercise['levelCategory'] ??
-                                      "No Category",
-                                  image: exercise['photoURL'] ??
-                                      "No Image Available",
-                                  id: exercise['uuid'] ?? "No ID",
-                                  letter:
-                                      exercise['characterName'] ?? "Unknown",
-                                ),
-                              ),
-                            );
-                          },
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // Display image from photoURL
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.network(
-                                    exercise['photoURL'] ??
-                                        'https://via.placeholder.com/90', // Placeholder image
-                                    height: 70,
-                                    width: 80,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}",
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                // Character Name
-                                Text(
-                                  "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                if (isCopyMode)
-                                  Checkbox(
-                                    value: isSelected,
-                                    onChanged: (bool? value) {
-                                      setState(() {
-                                        if (value == true) {
-                                          selectedExercises.add(exercise);
-                                        } else {
-                                          selectedExercises.removeWhere((e) =>
-                                              e['uuid'] == exercise['uuid']);
-                                        }
-                                      });
-                                    },
-                                  ),
-                              ],
+                return ListView.builder(
+                  itemCount: filteredExercises.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    var exercise = filteredExercises[index];
+                    bool isSelected = selectedExercises
+                        .any((e) => e['uuid'] == exercise['uuid']);
+                    return ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (builder) => LessonDetail(
+                              audio: exercise['audioURL'] ?? "No Audio",
+                              categoryName:
+                                  exercise['levelCategory'] ?? "No Category",
+                              image:
+                                  exercise['photoURL'] ?? "No Image Available",
+                              id: exercise['uuid'] ?? "No ID",
+                              letter: exercise['characterName'] ?? "Unknown",
                             ),
                           ),
                         );
                       },
+                      trailing: isCopyMode
+                          ? Checkbox(
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    selectedExercises.add(exercise);
+                                  } else {
+                                    selectedExercises.removeWhere(
+                                        (e) => e['uuid'] == exercise['uuid']);
+                                  }
+                                });
+                              },
+                            )
+                          : SizedBox(),
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage(
+                          exercise['photoURL'] ??
+                              'https://via.placeholder.com/150',
+                        ),
+                      ),
+                      title: Text(
+                          "Subject: ${exercise['levelSubCategory'] ?? 'N/A'}"),
+                      subtitle: Text(
+                        "Lesson: ${exercise['characterName'] ?? 'Unknown Lesson'}",
+                      ),
                     );
                   },
                 );
               },
             ),
           ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: toggleCopyMode,
-                child: Text(isCopyMode ? 'Cancel Copy' : 'Copy'),
-              ),
-              if (isCopyMode && selectedExercises.isNotEmpty)
-                ElevatedButton(
-                  onPressed: openPasteDialog,
-                  child: Text('Paste'),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SaveButton(
+                  color: mainBtnColor,
+                  onTap: toggleCopyMode,
+                  title: isCopyMode ? 'Cancel Copy' : 'Copy',
                 ),
-            ],
+                const SizedBox(width: 16),
+                if (isCopyMode && selectedExercises.isNotEmpty)
+                  SaveButton(
+                    color: mainBtnColor,
+                    onTap: openPasteDialog,
+                    title: 'Paste',
+                  ),
+              ],
+            ),
           ),
         ],
       ),

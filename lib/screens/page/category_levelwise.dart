@@ -21,6 +21,29 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: BottomAppBar(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Wrap(
+            spacing: 18.0,
+            children: [
+              'Pre-Kindergarden',
+              'Kindergarten',
+              'Level 1',
+              'Level 2',
+              'Level 3',
+              'Level 4',
+              'Level 5',
+              'Level 6',
+            ].map((level) {
+              return ElevatedButton(
+                onPressed: () => pasteData(level),
+                child: Text('$level'),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
@@ -34,65 +57,89 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
       ),
       body: Column(
         children: [
-          SizedBox(
-            height: 600,
-            child: StreamBuilder(
-              stream: FirebaseFirestore.instance
-                  .collection("categories")
-                  .where("level", isEqualTo: widget.level)
-                  .snapshots(),
-              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
+          Scrollbar(
+            interactive: true,
+            trackVisibility: true,
+            thickness: 10,
+            thumbVisibility: true,
+            child: SizedBox(
+              height: 490,
+              child: StreamBuilder(
+                stream: FirebaseFirestore.instance
+                    .collection("categories")
+                    .where("level", isEqualTo: widget.level)
+                    .snapshots(),
+                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text('No categories available.'));
-                }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(child: Text('No categories available.'));
+                  }
 
-                var data = snapshot.data!.docs;
-                List<DocumentSnapshot> sortedData = List.from(data);
-                sortedData.sort((a, b) {
-                  var aName =
-                      (a.data() as Map<String, dynamic>)['categoryName'] ?? '';
-                  var bName =
-                      (b.data() as Map<String, dynamic>)['categoryName'] ?? '';
-                  return aName
-                      .toString()
-                      .toLowerCase()
-                      .compareTo(bName.toString().toLowerCase());
-                });
+                  var data = snapshot.data!.docs;
+                  List<DocumentSnapshot> sortedData = List.from(data);
+                  sortedData.sort((a, b) {
+                    var aName =
+                        (a.data() as Map<String, dynamic>)['categoryName'] ??
+                            '';
+                    var bName =
+                        (b.data() as Map<String, dynamic>)['categoryName'] ??
+                            '';
+                    return aName
+                        .toString()
+                        .toLowerCase()
+                        .compareTo(bName.toString().toLowerCase());
+                  });
 
-                categorySnapshot = snapshot.data;
+                  categorySnapshot = snapshot.data;
 
-                if (selectedItems.length != sortedData.length) {
-                  selectedItems = List<bool>.filled(sortedData.length, false);
-                }
+                  if (selectedItems.length != sortedData.length) {
+                    selectedItems = List<bool>.filled(sortedData.length, false);
+                  }
 
-                return GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4, // Number of columns in the grid
-                    crossAxisSpacing: 8.0, // Horizontal spacing between tiles
-                    mainAxisSpacing: 8.0, // Vertical spacing between tiles
-                    childAspectRatio: 3 / 2, // Aspect ratio of each tile
-                  ),
-                  itemCount: sortedData.length,
-                  itemBuilder: (context, index) {
-                    var documentData =
-                        sortedData[index].data() as Map<String, dynamic>;
+                  return ListView.builder(
+                    itemCount: sortedData.length,
+                    itemBuilder: (context, index) {
+                      var documentData =
+                          sortedData[index].data() as Map<String, dynamic>;
 
-                    return Card(
-                      margin: EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircleAvatar(
+                      return Card(
+                        margin: EdgeInsets.all(8.0),
+                        child: ListTile(
+                          leading: CircleAvatar(
                             radius: 20,
                             backgroundImage: NetworkImage(
                               documentData['photoURL'],
                             ),
                           ),
-                          Row(
+                          title: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(documentData['categoryName'],
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16)),
+                              Text("Level: ${documentData['level']}",
+                                  style: TextStyle(color: Colors.grey)),
+                            ],
+                          ),
+                          trailing: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (builder) => ViewCategory(
+                                              id: documentData['uuid'],
+                                              categoryName:
+                                                  documentData['categoryName'],
+                                              level: documentData['level'],
+                                              image: documentData['photoURL'],
+                                            )));
+                              },
+                              child: Text("View Detail")),
+                          subtitle: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -126,56 +173,11 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
                               Text("Copy Select Data"), // Added text
                             ],
                           ),
-                          Text(documentData['categoryName'],
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text("Level: ${documentData['level']}",
-                              style: TextStyle(color: Colors.grey)),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (builder) => ViewCategory(
-                                              id: documentData['uuid'],
-                                              categoryName:
-                                                  documentData['categoryName'],
-                                              level: documentData['level'],
-                                              image: documentData['photoURL'],
-                                            )));
-                              },
-                              child: Text("View Detail"))
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          Spacer(),
-          Container(
-            height: 200,
-            padding: EdgeInsets.all(8.0),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Wrap(
-                spacing: 14.0,
-                children: [
-                  'Pre-Kindergarten',
-                  'Kindergarten',
-                  'Level 1',
-                  'Level 2',
-                  'Level 3',
-                  'Level 4',
-                  'Level 5',
-                  'Level 6',
-                ].map((level) {
-                  return ElevatedButton(
-                    onPressed: () => pasteData(level),
-                    child: Text('Paste to $level'),
+                        ),
+                      );
+                    },
                   );
-                }).toList(),
+                },
               ),
             ),
           ),

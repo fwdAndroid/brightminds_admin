@@ -275,7 +275,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                 return Column(
                   children: [
                     SizedBox(
-                      height: 700,
+                      height: 400,
                       child: Scrollbar(
                         controller: _scrollController, // Attach the controller
                         thickness: 12,
@@ -287,7 +287,8 @@ class _ImageSelectionState extends State<ImageSelection> {
                             var exercise = filteredExercises[index];
                             bool isSelected = selectedExercises
                                 .any((e) => e['uuid'] == exercise['uuid']);
-                            return ListTile(
+                            return 
+                            ListTile(
                               onTap: () {
                                 Navigator.push(
                                   context,
