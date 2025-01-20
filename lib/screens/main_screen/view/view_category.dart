@@ -351,19 +351,18 @@ class _ImageSelectionState extends State<ImageSelection> {
                                   ),
                                 ),
                                 if (isCopyMode)
-                                   Checkbox(
-                                      value: isSelected,
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            selectedExercises.add(exercise);
-                                          } else {
-                                            selectedExercises.removeWhere((e) =>
-                                                e['uuid'] == exercise['uuid']);
-                                          }
-                                        });
-                                      },
-                                    
+                                  Checkbox(
+                                    value: isSelected,
+                                    onChanged: (bool? value) {
+                                      setState(() {
+                                        if (value == true) {
+                                          selectedExercises.add(exercise);
+                                        } else {
+                                          selectedExercises.removeWhere((e) =>
+                                              e['uuid'] == exercise['uuid']);
+                                        }
+                                      });
+                                    },
                                   ),
                               ],
                             ),
@@ -395,30 +394,43 @@ class _ImageSelectionState extends State<ImageSelection> {
     );
   }
 
-  Map<String, String> levelCategoryMapping =
-      {}; // A map of categoryName to level.
-
+  Map<String, List<String>> levelCategoryMapping = {};
   void fetchDropdownData() async {
-    var querySnapshot =
-        await FirebaseFirestore.instance.collection('categories').get();
+    try {
+      var querySnapshot =
+          await FirebaseFirestore.instance.collection('categories').get();
 
-    Set<String> levelSet = {};
-    Set<String> categoryNameSet = {};
+      Map<String, List<String>> levelCategoryMapping = {};
+      Set<String> fetchedLevels = {};
 
-    for (var doc in querySnapshot.docs) {
-      String level = doc['level'];
-      String categoryName = doc['categoryName'];
+      for (var doc in querySnapshot.docs) {
+        String level =
+            doc['level'].toString(); // Ensure level is treated as a string
+        String categoryName = doc['categoryName'];
 
-      levelSet.add(level);
-      categoryNameSet.add(categoryName);
+        // Collect levels into a Set to avoid duplicates
+        fetchedLevels.add(level);
 
-      levelCategoryMapping[categoryName] = level; // Add mapping
+        // Collect categories per level
+        if (!levelCategoryMapping.containsKey(level)) {
+          levelCategoryMapping[level] = [];
+        }
+
+        // Allow duplicates in the same level's categories if needed
+        levelCategoryMapping[level]?.add(categoryName);
+      }
+
+      setState(() {
+        this.levelCategoryMapping = levelCategoryMapping;
+        this.levels = fetchedLevels.toList()..sort(); // Sort levels if needed
+      });
+
+      print("Fetched Levels: $levels"); // Debug print to check fetched levels
+      print(
+          "Level Category Mapping: $levelCategoryMapping"); // Debug print for mapping
+    } catch (e) {
+      print("Error fetching dropdown data: $e");
     }
-
-    setState(() {
-      levels = levelSet.toList();
-      categoryNames = categoryNameSet.toList();
-    });
   }
 
   void openPasteDialog() {
@@ -427,22 +439,18 @@ class _ImageSelectionState extends State<ImageSelection> {
       builder: (BuildContext context) {
         String? tempSelectedLevel;
         String? tempSelectedCategoryName;
-        List<String> filteredCategories =
-            []; // To store categories filtered by the selected level.
+        List<String> filteredCategories = [];
 
         return StatefulBuilder(
           builder: (BuildContext context, setState) {
-            // Function to update filtered categories when level is selected.
+            // Function to update filtered categories when level is selected
             void filterCategories(String? level) {
-              if (level != null) {
-                filteredCategories = categoryNames
-                    .where((category) =>
-                        levelCategoryMapping[category] == level) // Filter logic
-                    .toList();
+              if (level != null && levelCategoryMapping.containsKey(level)) {
+                filteredCategories = levelCategoryMapping[level]!;
               } else {
                 filteredCategories = [];
               }
-              setState(() {}); // Update the UI
+              setState(() {});
             }
 
             return AlertDialog(
@@ -477,12 +485,22 @@ class _ImageSelectionState extends State<ImageSelection> {
                         tempSelectedCategoryName = value;
                       });
                     },
-                    items: filteredCategories
-                        .map((categoryName) => DropdownMenuItem(
-                              value: categoryName,
-                              child: Text(categoryName),
-                            ))
-                        .toList(),
+                    items: filteredCategories.isNotEmpty
+                        ? filteredCategories
+                            .map((categoryName) => DropdownMenuItem(
+                                  value: categoryName,
+                                  child: Text(categoryName),
+                                ))
+                            .toList()
+                        : [
+                            DropdownMenuItem(
+                              value: null,
+                              child: Text(
+                                'No subjects available. Please add subjects and try again.',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ),
+                          ],
                   ),
                 ],
               ),
