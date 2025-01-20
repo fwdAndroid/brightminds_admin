@@ -57,128 +57,117 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
       ),
       body: Column(
         children: [
-          Scrollbar(
-            interactive: true,
-            trackVisibility: true,
-            thickness: 10,
-            thumbVisibility: true,
-            child: SizedBox(
-              height: 490,
-              child: StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection("categories")
-                    .where("level", isEqualTo: widget.level)
-                    .snapshots(),
-                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  }
+          SizedBox(
+            height: 460,
+            child: StreamBuilder(
+              stream: FirebaseFirestore.instance
+                  .collection("categories")
+                  .where("level", isEqualTo: widget.level)
+                  .snapshots(),
+              builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
 
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(child: Text('No categories available.'));
-                  }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(child: Text('No categories available.'));
+                }
 
-                  var data = snapshot.data!.docs;
-                  List<DocumentSnapshot> sortedData = List.from(data);
-                  sortedData.sort((a, b) {
-                    var aName =
-                        (a.data() as Map<String, dynamic>)['categoryName'] ??
-                            '';
-                    var bName =
-                        (b.data() as Map<String, dynamic>)['categoryName'] ??
-                            '';
-                    return aName
-                        .toString()
-                        .toLowerCase()
-                        .compareTo(bName.toString().toLowerCase());
-                  });
+                var data = snapshot.data!.docs;
+                List<DocumentSnapshot> sortedData = List.from(data);
+                sortedData.sort((a, b) {
+                  var aName =
+                      (a.data() as Map<String, dynamic>)['categoryName'] ?? '';
+                  var bName =
+                      (b.data() as Map<String, dynamic>)['categoryName'] ?? '';
+                  return aName
+                      .toString()
+                      .toLowerCase()
+                      .compareTo(bName.toString().toLowerCase());
+                });
 
-                  categorySnapshot = snapshot.data;
+                categorySnapshot = snapshot.data;
 
-                  if (selectedItems.length != sortedData.length) {
-                    selectedItems = List<bool>.filled(sortedData.length, false);
-                  }
+                if (selectedItems.length != sortedData.length) {
+                  selectedItems = List<bool>.filled(sortedData.length, false);
+                }
 
-                  return ListView.builder(
-                    itemCount: sortedData.length,
-                    itemBuilder: (context, index) {
-                      var documentData =
-                          sortedData[index].data() as Map<String, dynamic>;
+                return ListView.builder(
+                  itemCount: sortedData.length,
+                  itemBuilder: (context, index) {
+                    var documentData =
+                        sortedData[index].data() as Map<String, dynamic>;
 
-                      return Card(
-                        margin: EdgeInsets.all(8.0),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            radius: 20,
-                            backgroundImage: NetworkImage(
-                              documentData['photoURL'],
-                            ),
-                          ),
-                          title: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(documentData['categoryName'],
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
-                              Text("Level: ${documentData['level']}",
-                                  style: TextStyle(color: Colors.grey)),
-                            ],
-                          ),
-                          trailing: TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (builder) => ViewCategory(
-                                              id: documentData['uuid'],
-                                              categoryName:
-                                                  documentData['categoryName'],
-                                              level: documentData['level'],
-                                              image: documentData['photoURL'],
-                                            )));
-                              },
-                              child: Text("View Detail")),
-                          subtitle: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Checkbox(
-                                value: selectedItems[index],
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    selectedItems[index] = value!;
-                                    if (value) {
-                                      copiedData.add(documentData);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              'Copied: ${documentData['categoryName']}'),
-                                        ),
-                                      );
-                                    } else {
-                                      copiedData.remove(documentData);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              'Removed: ${documentData['categoryName']} from copy'),
-                                        ),
-                                      );
-                                    }
-                                  });
-                                },
-                              ),
-                              Text("Copy Select Data"), // Added text
-                            ],
+                    return Card(
+                      margin: EdgeInsets.all(8.0),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          radius: 20,
+                          backgroundImage: NetworkImage(
+                            documentData['photoURL'],
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(documentData['categoryName'],
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text("Level: ${documentData['level']}",
+                                style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                        trailing: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (builder) => ViewCategory(
+                                            id: documentData['uuid'],
+                                            categoryName:
+                                                documentData['categoryName'],
+                                            level: documentData['level'],
+                                            image: documentData['photoURL'],
+                                          )));
+                            },
+                            child: Text("View Detail")),
+                        subtitle: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              value: selectedItems[index],
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  selectedItems[index] = value!;
+                                  if (value) {
+                                    copiedData.add(documentData);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Copied: ${documentData['categoryName']}'),
+                                      ),
+                                    );
+                                  } else {
+                                    copiedData.remove(documentData);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Removed: ${documentData['categoryName']} from copy'),
+                                      ),
+                                    );
+                                  }
+                                });
+                              },
+                            ),
+                            Text("Copy Select Data"), // Added text
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],

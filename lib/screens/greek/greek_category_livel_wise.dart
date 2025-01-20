@@ -20,6 +20,29 @@ class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: BottomAppBar(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Wrap(
+            spacing: 18.0,
+            children: [
+              'Προνήπιο',
+              'Νηπιαγωγείο',
+              'Επίπεδο 1',
+              'Επίπεδο 2',
+              'Επίπεδο 3',
+              'Επίπεδο 4',
+              'Επίπεδο 5',
+              'Επίπεδο 6',
+            ].map((level) {
+              return ElevatedButton(
+                onPressed: () => pasteData(level),
+                child: Text('$level'),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
@@ -36,7 +59,8 @@ class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
       ),
       body: Column(
         children: [
-          Expanded(
+          SizedBox(
+            height: 460,
             child: StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection("categories")
@@ -70,13 +94,7 @@ class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
                   selectedItems = List<bool>.filled(sortedData.length, false);
                 }
 
-                return GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 4, // Number of columns in the grid
-                    crossAxisSpacing: 8.0, // Horizontal spacing between tiles
-                    mainAxisSpacing: 8.0, // Vertical spacing between tiles
-                    childAspectRatio: 3 / 2, // Aspect ratio of each tile
-                  ),
+                return ListView.builder(
                   itemCount: sortedData.length,
                   itemBuilder: (context, index) {
                     var documentData =
@@ -84,98 +102,74 @@ class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
 
                     return Card(
                       margin: EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundImage: NetworkImage(
-                              documentData['photoURL'],
-                            ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          radius: 20,
+                          backgroundImage: NetworkImage(
+                            documentData['photoURL'],
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Checkbox(
-                                value: selectedItems[index],
-                                onChanged: (bool? value) {
-                                  setState(() {
-                                    selectedItems[index] = value!;
-                                    if (value) {
-                                      copiedData.add(documentData);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              'Copied: ${documentData['categoryName']}'),
-                                        ),
-                                      );
-                                    } else {
-                                      copiedData.remove(documentData);
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                              'Removed: ${documentData['categoryName']} from copy'),
-                                        ),
-                                      );
-                                    }
-                                  });
-                                },
-                              ),
-                              Text("Copy Select Data"), // Added text
-                            ],
-                          ),
-                          Text(documentData['categoryName'],
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
-                          Text("Level: ${documentData['level']}",
-                              style: TextStyle(color: Colors.grey)),
-                          TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (builder) => ViewCategory(
-                                              id: documentData['uuid'],
-                                              categoryName:
-                                                  documentData['categoryName'],
-                                              level: documentData['level'],
-                                              image: documentData['photoURL'],
-                                            )));
+                        ),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(documentData['categoryName'],
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text("Level: ${documentData['level']}",
+                                style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                        trailing: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (builder) => ViewCategory(
+                                            id: documentData['uuid'],
+                                            categoryName:
+                                                documentData['categoryName'],
+                                            level: documentData['level'],
+                                            image: documentData['photoURL'],
+                                          )));
+                            },
+                            child: Text("View Detail")),
+                        subtitle: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Checkbox(
+                              value: selectedItems[index],
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  selectedItems[index] = value!;
+                                  if (value) {
+                                    copiedData.add(documentData);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Copied: ${documentData['categoryName']}'),
+                                      ),
+                                    );
+                                  } else {
+                                    copiedData.remove(documentData);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Removed: ${documentData['categoryName']} from copy'),
+                                      ),
+                                    );
+                                  }
+                                });
                               },
-                              child: Text("View Detail"))
-                        ],
+                            ),
+                            Text("Copy Select Data"), // Added text
+                          ],
+                        ),
                       ),
                     );
                   },
                 );
               },
-            ),
-          ),
-          Container(
-            padding: EdgeInsets.all(8.0),
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Wrap(
-                spacing: 14.0,
-                children: [
-                  'Προνήπιο',
-                  'Νηπιαγωγείο',
-                  'Επίπεδο 1',
-                  'Επίπεδο 2',
-                  'Επίπεδο 3',
-                  'Επίπεδο 4',
-                  'Επίπεδο 5',
-                  'Επίπεδο 6',
-                ].map((level) {
-                  return ElevatedButton(
-                    onPressed: () => pasteData(level),
-                    child: Text('Paste to $level'),
-                  );
-                }).toList(),
-              ),
             ),
           ),
         ],
