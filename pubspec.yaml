@@ -41,6 +41,7 @@ dependencies:
   just_audio: ^0.9.42
   sidebarx: ^0.17.1
   uuid: ^4.5.1
+  video_player: ^2.9.2
 
 
 dev_dependencies:

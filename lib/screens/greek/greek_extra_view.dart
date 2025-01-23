@@ -273,11 +273,11 @@ class ImageSelection extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (builder) => LessonDetail(
+                            id: exercise['uuid'],
                             audio: exercise['audioURL'] ?? "No Audio",
                             categoryName:
                                 exercise['levelCategory'] ?? "No Category",
                             image: exercise['photoURL'] ?? "No Image Available",
-                            id: exercise['uuid'] ?? "No ID",
                             letter: exercise['characterName'] ?? "Unknown",
                           ),
                         ),

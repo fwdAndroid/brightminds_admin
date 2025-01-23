@@ -58,22 +58,56 @@ class _FormSection extends StatefulWidget {
 class _FormSectionState extends State<_FormSection> {
   TextEditingController serviceNameController = TextEditingController();
   Uint8List? _image;
-  Uint8List? _audio;
+  Uint8List? _media; // Used for both audio and video
   bool isAdded = false;
+  String? _mediaType; // To track if it's audio or video
+  Future<void> showMediaDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select Media Type"),
+          content: const Text("Choose whether to upload audio or video."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, 'audio');
+              },
+              child: const Text("Upload Audio"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, 'video');
+              },
+              child: const Text("Upload Video"),
+            ),
+          ],
+        );
+      },
+    ).then((selection) {
+      if (selection == 'audio') {
+        selectMedia(FileType.custom, ['mp3'], 'audio');
+      } else if (selection == 'video') {
+        selectMedia(FileType.video, null, 'video');
+      }
+    });
+  }
 
-  Future<void> selectAudio() async {
+  Future<void> selectMedia(
+      FileType type, List<String>? extensions, String mediaType) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3'],
+      type: type,
+      allowedExtensions: extensions,
     );
 
     if (result != null && result.files.single.bytes != null) {
       setState(() {
-        _audio = result.files.single.bytes;
+        _media = result.files.single.bytes;
+        _mediaType = mediaType;
       });
-      print("Audio Selected: ${result.files.single.name}");
+      print("${mediaType.toUpperCase()} Selected: ${result.files.single.name}");
     } else {
-      print("No audio file selected.");
+      print("No $mediaType file selected.");
     }
   }
 
@@ -117,8 +151,14 @@ class _FormSectionState extends State<_FormSection> {
               ),
             ),
             TextButton(
-              onPressed: selectAudio,
-              child: Text(_audio == null ? "Add Audio" : "Audio Selected"),
+              onPressed: showMediaDialog,
+              child: Text(
+                _media == null
+                    ? "Add Media"
+                    : _mediaType == 'audio'
+                        ? "Audio Selected"
+                        : "Video Selected",
+              ),
             ),
             const SizedBox(height: 10),
             Text("Level : ${widget.level}"),
@@ -146,7 +186,7 @@ class _FormSectionState extends State<_FormSection> {
                       onTap: () async {
                         if (serviceNameController.text.isEmpty ||
                             _image == null ||
-                            _audio == null) {
+                            _media == null) {
                           showMessageBar("All fields are required!", context);
                         } else {
                           setState(() {
@@ -158,7 +198,7 @@ class _FormSectionState extends State<_FormSection> {
                             levelCategory: widget.level,
                             characterName: serviceNameController.text.trim(),
                             file: _image!,
-                            audioFile: _audio!,
+                            audioFile: _media!,
                           );
 
                           setState(() {
