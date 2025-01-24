@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -12,6 +13,7 @@ class EditLesson extends StatefulWidget {
   final String id;
   final String characterName;
   final String audioURL;
+  final String mediaType;
 
   EditLesson({
     super.key,
@@ -20,6 +22,7 @@ class EditLesson extends StatefulWidget {
     required this.image,
     required this.characterName,
     required this.audioURL,
+    required this.mediaType,
   });
 
   @override
@@ -36,6 +39,7 @@ class _EditLessonState extends State<EditLesson> {
             child: Row(
               children: [
                 FormSelection(
+                  mediaType: widget.mediaType,
                   id: widget.id,
                   categoryName: widget.levelSubCategory,
                   image: widget.image,
@@ -58,6 +62,7 @@ class FormSelection extends StatefulWidget {
   final String id;
   final String audioURL;
   final String characterName;
+  final String mediaType;
 
   FormSelection({
     super.key,
@@ -66,6 +71,7 @@ class FormSelection extends StatefulWidget {
     required this.characterName,
     required this.id,
     required this.audioURL,
+    required this.mediaType,
   });
 
   @override

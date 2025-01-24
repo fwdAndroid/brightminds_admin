@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:brightminds_admin/database/database.dart';
 import 'package:brightminds_admin/screens/main_screen/web_home.dart';
 import 'package:brightminds_admin/utils/app_colors.dart';
@@ -13,10 +12,14 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 
 class AddExerciseScreen extends StatefulWidget {
-  String categoryName;
-  String level;
-  AddExerciseScreen(
-      {super.key, required this.categoryName, required this.level});
+  final String categoryName;
+  final String level;
+
+  AddExerciseScreen({
+    super.key,
+    required this.categoryName,
+    required this.level,
+  });
 
   @override
   State<AddExerciseScreen> createState() => _AddExerciseScreenState();
@@ -47,9 +50,14 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 }
 
 class _FormSection extends StatefulWidget {
-  String categoryName;
-  String level;
-  _FormSection({super.key, required this.categoryName, required this.level});
+  final String categoryName;
+  final String level;
+
+  _FormSection({
+    super.key,
+    required this.categoryName,
+    required this.level,
+  });
 
   @override
   State<_FormSection> createState() => _FormSectionState();
@@ -61,6 +69,8 @@ class _FormSectionState extends State<_FormSection> {
   Uint8List? _media; // Used for both audio and video
   bool isAdded = false;
   String? _mediaType; // To track if it's audio or video
+  double _uploadProgress = 0.0; // Progress tracking
+
   Future<void> showMediaDialog() async {
     await showDialog(
       context: context,
@@ -176,6 +186,13 @@ class _FormSectionState extends State<_FormSection> {
                 enabled: true,
               ),
             ),
+            if (_uploadProgress > 0 && _uploadProgress < 1)
+              Column(
+                children: [
+                  LinearProgressIndicator(value: _uploadProgress),
+                  Text("${(_uploadProgress * 100).toStringAsFixed(1)}%"),
+                ],
+              ),
             isAdded
                 ? const Center(child: CircularProgressIndicator())
                 : Padding(
@@ -193,24 +210,34 @@ class _FormSectionState extends State<_FormSection> {
                             isAdded = true;
                           });
 
+                          // Track upload progress
                           await Database().addExercise(
                             levelSubCategory: widget.categoryName,
                             levelCategory: widget.level,
                             characterName: serviceNameController.text.trim(),
                             file: _image!,
                             audioFile: _media!,
+                            mediaType: _mediaType!,
+                            onProgress: (progress) {
+                              setState(() {
+                                _uploadProgress = progress;
+                              });
+                            },
                           );
 
                           setState(() {
                             isAdded = false;
+                            _uploadProgress = 0.0;
                           });
                           showMessageBar(
                               "Exercise Added Successfully", context);
-                          Navigator.pop(context);
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (builder) => WebHome()));
                         }
                       },
-                    ),
-                  ),
+                    )),
           ],
         ),
       ),

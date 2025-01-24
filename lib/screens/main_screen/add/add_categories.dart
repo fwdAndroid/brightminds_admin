@@ -162,7 +162,10 @@ class _FormSectionState extends State<_FormSection> {
                             // Handle the result accordingly
                             showMessageBar(
                                 "Category Added Successfully", context);
-                            Navigator.pop(context);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (builder) => WebHome()));
                           }
                         }),
                   ),

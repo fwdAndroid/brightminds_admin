@@ -267,6 +267,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                           context,
                           MaterialPageRoute(
                             builder: (builder) => LessonDetail(
+                              mediaType: exercise['mediaType'] ?? "audio",
                               audio: exercise['audioURL'] ?? "No Audio",
                               categoryName:
                                   exercise['levelCategory'] ?? "No Category",

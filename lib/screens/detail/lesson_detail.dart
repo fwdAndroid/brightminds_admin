@@ -1,185 +1,208 @@
 import 'package:brightminds_admin/screens/detail/edit_lesson.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:brightminds_admin/utils/buttons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart'; // For video playback
+import 'package:just_audio/just_audio.dart'; // For audio playback
 
 class LessonDetail extends StatefulWidget {
-  final String audio;
+  final String mediaType; // Either "video" or "audio"
+  final String audio; // URL of the media file
   final String categoryName;
   final String image;
-  final String letter;
   final String id;
+  final String letter;
 
-  const LessonDetail({
-    Key? key,
+  LessonDetail({
+    required this.mediaType,
     required this.audio,
     required this.categoryName,
     required this.image,
-    required this.letter,
     required this.id,
-  }) : super(key: key);
+    required this.letter,
+  });
 
   @override
   _LessonDetailState createState() => _LessonDetailState();
 }
 
 class _LessonDetailState extends State<LessonDetail> {
+  late VideoPlayerController _videoController;
   late AudioPlayer _audioPlayer;
-  bool isPlaying = false;
+  bool isVideoInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _audioPlayer = AudioPlayer();
+    if (widget.mediaType == "video") {
+      _videoController = VideoPlayerController.network(widget.audio)
+        ..initialize().then((_) {
+          setState(() {
+            isVideoInitialized = true;
+          });
+          _videoController.play();
+        });
+    } else if (widget.mediaType == "audio") {
+      _audioPlayer = AudioPlayer();
+      _audioPlayer.setUrl(widget.audio);
+      _audioPlayer.play();
+    }
   }
 
   @override
   void dispose() {
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  Future<void> _playPauseAudio() async {
-    if (isPlaying) {
-      await _audioPlayer.pause();
-      setState(() {
-        isPlaying = false;
-      });
-    } else {
-      try {
-        await _audioPlayer.setUrl(widget.audio);
-        await _audioPlayer.play();
-        setState(() {
-          isPlaying = true;
-        });
-
-        // Listen for completion
-        _audioPlayer.playerStateStream.listen((state) {
-          if (state.processingState == ProcessingState.completed) {
-            setState(() {
-              isPlaying = false;
-            });
-          }
-        });
-      } catch (e) {
-        print("Error playing audio: $e");
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: Could not play the audio')),
-        );
-      }
+    if (widget.mediaType == "video") {
+      _videoController.dispose();
+    } else if (widget.mediaType == "audio") {
+      _audioPlayer.dispose();
     }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.categoryName),
+        title: Text(widget.letter),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  widget.image,
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "Lesson: ${widget.letter}",
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _playPauseAudio,
-                icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
-                label: Text(isPlaying ? "Pause Audio" : "Play Audio"),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 32.0, vertical: 12.0),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SaveButton(
-                    title: "Delete",
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Confirm Delete'),
-                            content: Text(
-                                'Are you sure you want to delete this lesson?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context); // Close dialog
-                                },
-                                child: Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  try {
-                                    await FirebaseFirestore.instance
-                                        .collection('letters')
-                                        .doc(widget.id)
-                                        .delete();
-                                    Navigator.pop(context); // Close dialog
-                                    Navigator.pop(
-                                        context); // Go back to previous screen
-                                  } catch (e) {
-                                    print("Error deleting category: $e");
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Failed to delete category')),
-                                    );
-                                  }
-                                },
-                                child: Text('Delete',
-                                    style: TextStyle(color: Colors.red)),
-                              ),
-                            ],
-                          );
-                        },
+      body: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              widget.image,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Lesson: ${widget.letter}",
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Center(
+            child: widget.mediaType == "video"
+                ? isVideoInitialized
+                    ? Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: 400,
+                          height: 100,
+                          child: AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: VideoPlayer(_videoController),
+                          ),
+                        ),
+                      )
+                    : CircularProgressIndicator()
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(widget.image),
+                        radius: 50,
+                      ),
+                      SizedBox(height: 20),
+                      Text(
+                        "Playing audio for ${widget.letter}",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Icon(Icons.music_note, size: 50, color: Colors.blue),
+                    ],
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: SaveButton(
+                title: "Delete",
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Confirm Delete'),
+                        content: Text(
+                            'Are you sure you want to delete this lesson?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context); // Close dialog
+                            },
+                            child: Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              try {
+                                await FirebaseFirestore.instance
+                                    .collection('letters')
+                                    .doc(widget.id)
+                                    .delete();
+                                Navigator.pop(context); // Close dialog
+                                Navigator.pop(
+                                    context); // Go back to previous screen
+                              } catch (e) {
+                                print("Error deleting category: $e");
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text('Failed to delete category')),
+                                );
+                              }
+                            },
+                            child: Text('Delete',
+                                style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
                       );
                     },
-                    color: Colors.red),
-              ),
-              Padding(
-                  padding: EdgeInsets.all(8),
-                  child: SaveButton(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (builder) => EditLesson(
-                                    id: widget.id,
-                                    levelSubCategory: widget.categoryName,
-                                    image: widget.image,
-                                    characterName: widget.letter,
-                                    audioURL: widget.audio,
-                                  )));
-                    },
-                    title: "Edit",
-                    color: Colors.green,
-                  )),
-            ],
+                  );
+                },
+                color: Colors.red),
           ),
-        ),
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: SaveButton(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (builder) => EditLesson(
+                                mediaType: widget.mediaType,
+                                id: widget.id,
+                                levelSubCategory: widget.categoryName,
+                                image: widget.image,
+                                characterName: widget.letter,
+                                audioURL: widget.audio,
+                              )));
+                },
+                title: "Edit",
+                color: Colors.green,
+              )),
+        ],
       ),
+      floatingActionButton: widget.mediaType == "video"
+          ? FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  if (_videoController.value.isPlaying) {
+                    _videoController.pause();
+                  } else {
+                    _videoController.play();
+                  }
+                });
+              },
+              child: Icon(
+                _videoController.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
+              ),
+            )
+          : null,
     );
   }
 }

@@ -5,52 +5,74 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:brightminds_admin/database/storage_methods.dart';
 import 'package:brightminds_admin/model/service_model.dart';
 import 'package:uuid/uuid.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class Database {
-  Future<String> addExercise(
-      {required String characterName,
-      required Uint8List file, // Image file
-      required Uint8List audioFile, // Audio file
-      required String levelSubCategory,
-      required String levelCategory}) async {
-    String res = 'Something went wrong';
+  Future<void> addExercise({
+    required String levelSubCategory,
+    required String levelCategory,
+    required String characterName,
+    required Uint8List file,
+    required Uint8List audioFile,
+    required String mediaType, // Media type (audio or video)
+    required Function(double) onProgress, // Progress callback
+  }) async {
     try {
-      if (characterName.isNotEmpty) {
-        print("Uploading image...");
-        String photoURL = await StorageMethods()
-            .uploadImageToStorage('ExercisePics', file, true);
+      // Generate a UUID for the exercise document
+      String uuid = Uuid().v4(); // Generates a unique UUID
 
-        print("Uploading audio...");
-        String audioURL = await StorageMethods().uploadMP3ToStorage(audioFile);
+      // Firebase Storage references for image and media
+      Reference imageRef =
+          FirebaseStorage.instance.ref().child('exercises/$uuid/image.png');
+      Reference mediaRef = FirebaseStorage.instance
+          .ref()
+          .child('exercises/$uuid/media.$mediaType');
 
-        String uuid = Uuid().v4();
-        print("Creating exercise model...");
-        ExersciseModel exerciseModel = ExersciseModel(
-          levelCategory: levelCategory,
-          levelSubCategory: levelSubCategory,
-          characterName: characterName,
-          uuid: uuid,
-          photoURL: photoURL,
-          audioURL: audioURL,
-        );
+      // Upload the image with progress tracking
+      UploadTask imageUploadTask = imageRef.putData(file);
+      imageUploadTask.snapshotEvents.listen((event) {
+        double progress = event.bytesTransferred / event.totalBytes;
+        onProgress(progress / 2); // Image upload is 50% of the total progress
+      });
 
-        // Ensure category document exists, if not, create it.
+      // Wait for the image upload to complete
+      await imageUploadTask;
 
-        // Add exercise to the array field 'exercises' in the category document.
-        print("Adding exercise to Firestore...");
-        await FirebaseFirestore.instance.collection('letters').doc(uuid).set({
-          'exercises': FieldValue.arrayUnion([exerciseModel.toJson()]),
-        });
+      // Upload the media with progress tracking
+      UploadTask mediaUploadTask = mediaRef.putData(audioFile);
+      mediaUploadTask.snapshotEvents.listen((event) {
+        double progress = event.bytesTransferred / event.totalBytes;
+        onProgress(0.5 + (progress / 2)); // Media upload is the other 50%
+      });
 
-        res = 'success';
-      } else {
-        res = 'Category or Character Name is missing';
-      }
+      // Wait for the media upload to complete
+      await mediaUploadTask;
+
+      // Get the download URLs for the uploaded files
+      String imageUrl = await imageRef.getDownloadURL();
+      String mediaUrl = await mediaRef.getDownloadURL();
+
+      // Create an exercise model or map
+      Map<String, dynamic> exerciseModel = {
+        'levelSubCategory': levelSubCategory,
+        'levelCategory': levelCategory,
+        'characterName': characterName,
+        'photoURL': imageUrl, // URL of the uploaded image
+        'audioURL': mediaUrl, // URL of the uploaded media
+        'mediaType': mediaType, // Media type
+        'uuid': uuid
+      };
+
+      // Store the data in Firestore
+      await FirebaseFirestore.instance.collection('letters').doc(uuid).set({
+        'exercises': FieldValue.arrayUnion([exerciseModel]),
+      });
+
+      // Print the document UUID (ID) to the console after upload
+      print("Exercise added successfully with UUID: $uuid");
     } catch (e) {
-      print("Error in addExercise: $e");
-      res = e.toString();
+      print("Error adding exercise: $e");
     }
-    return res;
   }
 
   Future<String> addServices(
