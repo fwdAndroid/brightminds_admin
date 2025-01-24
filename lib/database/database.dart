@@ -159,4 +159,35 @@ class Database {
     }
     return res;
   }
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<List<Map<String, dynamic>>> fetchFilteredExercises({
+    required String categoryName,
+    required String level,
+  }) async {
+    try {
+      QuerySnapshot querySnapshot =
+          await _firestore.collection('letters').get();
+
+      List<Map<String, dynamic>> filteredExercises = [];
+
+      for (var doc in querySnapshot.docs) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        List<Map<String, dynamic>> exercises =
+            List<Map<String, dynamic>>.from(data['exercises'] ?? []);
+
+        // Filter exercises where categoryName and level match
+        filteredExercises.addAll(exercises.where((exercise) =>
+            exercise['levelSubCategory'] == categoryName &&
+            exercise['levelCategory'] == level));
+      }
+
+      return filteredExercises;
+    } catch (e) {
+      print('Error fetching filtered exercises: $e');
+      return [];
+    }
+  }
+  //Open Paste Dialog
 }

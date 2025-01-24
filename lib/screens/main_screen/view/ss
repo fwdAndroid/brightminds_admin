@@ -1,4 +1,3 @@
-import 'package:brightminds_admin/database/database.dart';
 import 'package:brightminds_admin/screens/deleteupdate/update_categories.dart';
 import 'package:brightminds_admin/screens/detail/lesson_detail.dart';
 import 'package:brightminds_admin/screens/main_screen/add/add_exercise.dart';
@@ -167,11 +166,7 @@ class ImageSelection extends StatefulWidget {
   final String categoryName;
   final String level;
 
-  ImageSelection({
-    super.key,
-    required this.categoryName,
-    required this.level,
-  });
+  ImageSelection({super.key, required this.categoryName, required this.level});
 
   @override
   State<ImageSelection> createState() => _ImageSelectionState();
@@ -186,45 +181,56 @@ class _ImageSelectionState extends State<ImageSelection> {
   List<String> categoryNames = [];
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     fetchDropdownData();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return 
+    Container(
       width: MediaQuery.of(context).size.width * 0.6,
       child: Column(
         children: [
-          Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: Database().fetchFilteredExercises(
-                  level: widget.level, categoryName: widget.categoryName),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
+          SizedBox(
+            height: 500,
+            child: StreamBuilder(
+              stream:
+                  FirebaseFirestore.instance.collection('letters').snapshots(),
+              builder: (BuildContext context, snapshot) {
+                // Error handling
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(
+                    child: Text('Error: ${snapshot.error}'),
+                  );
                 }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No matching exercises found.'));
+
+                // Show loading spinner
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
                 }
-                List<Map<String, dynamic>> filteredExercises = [];
+
+                // If no data is found
                 allExercises.clear();
+                List<Map<String, dynamic>> filteredExercises = [];
 
                 // Process each document in 'letters'
                 // Process each document in 'letters'
-                for (var exercise in snapshot.data!) {
-                  // Match levelSubCategory and levelCategory
-                  if (exercise['levelSubCategory'] == widget.categoryName &&
-                      exercise['levelCategory'] == widget.level) {
-                    filteredExercises.add(exercise);
-                    allExercises.add(exercise);
+                for (var doc in snapshot.data!.docs) {
+                  // Check if 'exercises' field exists and is a List
+                  var exercises =
+                      doc['exercises'] is List ? doc['exercises'] : [];
+                  for (var exercise in exercises) {
+                    // Match levelSubCategory with categoryName
+                    if (exercise['levelSubCategory'] == widget.categoryName &&
+                        exercise['levelCategory'] == widget.level) {
+                      filteredExercises.add(exercise);
+                      allExercises.add(exercise);
+                    }
                   }
                 }
-                // Sort the filtered exercises alphabetically by 'characterName'
+
+                // Sort the exercises by numeric and alphabetic sequence
                 filteredExercises.sort((a, b) {
                   int parseOrder(String? characterName) {
                     // Extract number from the beginning of the string
@@ -255,10 +261,17 @@ class _ImageSelectionState extends State<ImageSelection> {
                       .compareTo(parseString(b['characterName']));
                 });
 
+                // If no exercises are found
+                if (filteredExercises.isEmpty) {
+                  return const Center(
+                    child: Text('No Exercises Found'),
+                  );
+                }
+
                 return ListView.builder(
                   itemCount: filteredExercises.length,
-                  itemBuilder: (context, index) {
-                    final exercise = filteredExercises[index];
+                  itemBuilder: (BuildContext context, int index) {
+                    var exercise = filteredExercises[index];
                     bool isSelected = selectedExercises
                         .any((e) => e['uuid'] == exercise['uuid']);
                     return ListTile(
@@ -351,23 +364,45 @@ class _ImageSelectionState extends State<ImageSelection> {
     );
   }
 
-  List<Map<String, dynamic>> allExercises = [];
-  void copyAllExercises() {
-    setState(() {
-      selectedExercises = List.from(allExercises);
-    });
-  }
+  Map<String, List<String>> levelCategoryMapping = {};
+  void fetchDropdownData() async {
+    try {
+      var querySnapshot =
+          await FirebaseFirestore.instance.collection('categories').get();
 
-  void toggleCopyMode() {
-    setState(() {
-      isCopyMode = !isCopyMode;
-      if (!isCopyMode) {
-        selectedExercises.clear(); // Clear selection when exiting copy mode
+      Map<String, List<String>> levelCategoryMapping = {};
+      Set<String> fetchedLevels = {};
+
+      for (var doc in querySnapshot.docs) {
+        String level =
+            doc['level'].toString(); // Ensure level is treated as a string
+        String categoryName = doc['categoryName'];
+
+        // Collect levels into a Set to avoid duplicates
+        fetchedLevels.add(level);
+
+        // Collect categories per level
+        if (!levelCategoryMapping.containsKey(level)) {
+          levelCategoryMapping[level] = [];
+        }
+
+        // Allow duplicates in the same level's categories if needed
+        levelCategoryMapping[level]?.add(categoryName);
       }
-    });
+
+      setState(() {
+        this.levelCategoryMapping = levelCategoryMapping;
+        this.levels = fetchedLevels.toList()..sort(); // Sort levels if needed
+      });
+
+      print("Fetched Levels: $levels"); // Debug print to check fetched levels
+      print(
+          "Level Category Mapping: $levelCategoryMapping"); // Debug print for mapping
+    } catch (e) {
+      print("Error fetching dropdown data: $e");
+    }
   }
 
-  //Open Copy Paste
   void openPasteDialog() {
     showDialog(
       context: context,
@@ -465,6 +500,13 @@ class _ImageSelectionState extends State<ImageSelection> {
     );
   }
 
+  List<Map<String, dynamic>> allExercises = [];
+  void copyAllExercises() {
+    setState(() {
+      selectedExercises = List.from(allExercises);
+    });
+  }
+
   void duplicateExercises(
     BuildContext context,
     String? selectedLevel,
@@ -508,42 +550,12 @@ class _ImageSelectionState extends State<ImageSelection> {
     );
   }
 
-  Map<String, List<String>> levelCategoryMapping = {};
-  void fetchDropdownData() async {
-    try {
-      var querySnapshot =
-          await FirebaseFirestore.instance.collection('categories').get();
-
-      Map<String, List<String>> levelCategoryMapping = {};
-      Set<String> fetchedLevels = {};
-
-      for (var doc in querySnapshot.docs) {
-        String level =
-            doc['level'].toString(); // Ensure level is treated as a string
-        String categoryName = doc['categoryName'];
-
-        // Collect levels into a Set to avoid duplicates
-        fetchedLevels.add(level);
-
-        // Collect categories per level
-        if (!levelCategoryMapping.containsKey(level)) {
-          levelCategoryMapping[level] = [];
-        }
-
-        // Allow duplicates in the same level's categories if needed
-        levelCategoryMapping[level]?.add(categoryName);
+  void toggleCopyMode() {
+    setState(() {
+      isCopyMode = !isCopyMode;
+      if (!isCopyMode) {
+        selectedExercises.clear(); // Clear selection when exiting copy mode
       }
-
-      setState(() {
-        this.levelCategoryMapping = levelCategoryMapping;
-        this.levels = fetchedLevels.toList()..sort(); // Sort levels if needed
-      });
-
-      print("Fetched Levels: $levels"); // Debug print to check fetched levels
-      print(
-          "Level Category Mapping: $levelCategoryMapping"); // Debug print for mapping
-    } catch (e) {
-      print("Error fetching dropdown data: $e");
-    }
+    });
   }
 }
