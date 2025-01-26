@@ -1,5 +1,4 @@
 import 'package:brightminds_admin/screens/detail/lesson_detail.dart';
-import 'package:brightminds_admin/screens/greek/add_extra_excersise_screen.dart';
 import 'package:brightminds_admin/screens/greek/update_categories-extra.dart';
 import 'package:brightminds_admin/utils/app_colors.dart';
 import 'package:brightminds_admin/utils/buttons.dart';
@@ -27,17 +26,8 @@ class _ExtraViewsState extends State<ExtraViews> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => AddExtraExcersiseScreen(
-                          level: widget.level,
-                          categoryName: widget.categoryName,
-                        )));
-          }),
+      floatingActionButton:
+          FloatingActionButton(child: Icon(Icons.add), onPressed: () {}),
       appBar: AppBar(),
       body: Column(
         children: [

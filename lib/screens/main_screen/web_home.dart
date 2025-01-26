@@ -1,6 +1,7 @@
 import 'package:brightminds_admin/screens/greek/greek_section.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/category_web.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/complaint_screen.dart';
+import 'package:brightminds_admin/screens/main_screen/pages/html_section.dart';
 import 'package:brightminds_admin/screens/main_screen/pages/users.dart';
 import 'package:brightminds_admin/screens/web_auth/web_login.dart';
 import 'package:brightminds_admin/utils/colors.dart';
@@ -126,6 +127,10 @@ class ExampleSidebarX extends StatelessWidget {
           label: 'Greek Section',
         ),
         SidebarXItem(
+          icon: Icons.dock,
+          label: 'HTML Section',
+        ),
+        SidebarXItem(
           icon: Icons.compare,
           label: 'Complaint',
         ),
@@ -160,11 +165,12 @@ class _ScreensExample extends StatelessWidget {
 
           case 2:
             return GreekSection();
-
           case 3:
+            return const HtmlSection();
+          case 4:
             return const ComplaintScreen();
 
-          case 4:
+          case 5:
             return AlertDialog(
               title: const Text('Logout Alert'),
               content: SingleChildScrollView(

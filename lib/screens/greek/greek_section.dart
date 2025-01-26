@@ -1,4 +1,4 @@
-import 'package:brightminds_admin/screens/greek/greek_extra_subject.dart';
+import 'package:brightminds_admin/screens/extra_category_english/add_extra_category.dart';
 import 'package:brightminds_admin/screens/greek/add_subject_greek.dart';
 import 'package:brightminds_admin/screens/greek/greek_category_livel_wise.dart';
 import 'package:brightminds_admin/utils/colors.dart';
@@ -78,7 +78,7 @@ class _GreekSectionState extends State<GreekSection> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (builder) => GreekExtraSubject(
+                          builder: (builder) => AddExtraCategory(
                                 level: "Προνήπιο",
                               )));
                 },
@@ -102,7 +102,7 @@ class _GreekSectionState extends State<GreekSection> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (builder) => GreekExtraSubject(
+                          builder: (builder) => AddExtraCategory(
                                 level: "Νηπιαγωγείο",
                               )));
                 },
@@ -112,7 +112,7 @@ class _GreekSectionState extends State<GreekSection> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
+                      builder: (builder) => AddExtraCategory(
                             level: 'Επίπεδο 1',
                           )));
             }),
@@ -120,7 +120,7 @@ class _GreekSectionState extends State<GreekSection> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
+                      builder: (builder) => AddExtraCategory(
                             level: 'Επίπεδο 2',
                           )));
             }),
@@ -128,7 +128,7 @@ class _GreekSectionState extends State<GreekSection> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
+                      builder: (builder) => AddExtraCategory(
                             level: "Επίπεδο 3",
                           )));
             }),
@@ -136,7 +136,7 @@ class _GreekSectionState extends State<GreekSection> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
+                      builder: (builder) => AddExtraCategory(
                             level: "Επίπεδο 4",
                           )));
             }),
@@ -144,7 +144,7 @@ class _GreekSectionState extends State<GreekSection> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
+                      builder: (builder) => AddExtraCategory(
                             level: "Επίπεδο 5",
                           )));
             }),
@@ -152,7 +152,7 @@ class _GreekSectionState extends State<GreekSection> {
               Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (builder) => GreekExtraSubject(
+                      builder: (builder) => AddExtraCategory(
                             level: "Επίπεδο 6",
                           )));
             }),

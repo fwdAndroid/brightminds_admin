@@ -1,5 +1,4 @@
-import 'package:brightminds_admin/screens/extra_category_english/add_extra_subkect.dart';
-import 'package:brightminds_admin/screens/extra_category_english/extra_view.dart';
+import 'package:brightminds_admin/screens/html_work/add_html_file.dart';
 import 'package:brightminds_admin/utils/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -20,15 +19,13 @@ class _AddExtraCategoryState extends State<AddExtraCategory> {
         backgroundColor: mainBtnColor,
         onPressed: () {
           Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (builder) => AddExtraSubject(level: widget.level)));
+              context, MaterialPageRoute(builder: (builder) => AddHtmlFile()));
         },
         child: Icon(Icons.add),
       ),
       body: StreamBuilder(
           stream: FirebaseFirestore.instance
-              .collection("extras")
+              .collection("webFiles")
               .where("level", isEqualTo: widget.level)
               .snapshots(),
           builder:
@@ -45,7 +42,7 @@ class _AddExtraCategoryState extends State<AddExtraCategory> {
             if (data.isEmpty) {
               // No records found
               return Center(
-                child: Text('Currently No Provider Available in Our System'),
+                child: Text('Currently Extra Avaialble'),
               );
             }
             return LayoutBuilder(
@@ -68,15 +65,15 @@ class _AddExtraCategoryState extends State<AddExtraCategory> {
                         padding: const EdgeInsets.all(8.0),
                         child: GestureDetector(
                           onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (builder) => ExtraViews(
-                                        level: documentData['level'],
-                                        id: documentData['uuid'],
-                                        categoryName:
-                                            documentData['categoryName'],
-                                        image: documentData['photoURL'])));
+                            // Navigator.push(
+                            //     context,
+                            //     MaterialPageRoute(
+                            //         builder: (builder) => ExtraViews(
+                            //             level: documentData['level'],
+                            //             id: documentData['uuid'],
+                            //             categoryName:
+                            //                 documentData['categoryName'],
+                            //             image: documentData['photoURL'])));
                           },
                           child: Card(
                             shape: RoundedRectangleBorder(
@@ -84,22 +81,6 @@ class _AddExtraCategoryState extends State<AddExtraCategory> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 8, right: 8),
-                                    child: ClipRRect(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(12)),
-                                      child: Image.network(
-                                        height: 80,
-                                        width: 90,
-                                        fit: BoxFit.cover,
-                                        documentData['photoURL'],
-                                      ),
-                                    ),
-                                  ),
-                                ),
                                 Padding(
                                   padding: const EdgeInsets.all(8.0),
                                   child: Align(
@@ -117,7 +98,7 @@ class _AddExtraCategoryState extends State<AddExtraCategory> {
                                   child: Align(
                                     alignment: Alignment.topLeft,
                                     child: Text(
-                                      documentData['categoryName'],
+                                      documentData['excercise'],
                                       style: TextStyle(
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold),
