@@ -488,6 +488,7 @@ class _ImageSelectionState extends State<ImageSelection> {
         'levelSubCategory': selectedCategoryName,
         'levelCategory': selectedLevel,
         'uuid': newDocumentId,
+        'mediaType': exercise['mediaType'],
       };
 
       try {
