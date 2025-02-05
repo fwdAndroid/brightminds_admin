@@ -1,5 +1,6 @@
 import 'package:brightminds_admin/screens/detail/lesson_detail.dart';
 import 'package:brightminds_admin/screens/greek/update_categories-extra.dart';
+import 'package:brightminds_admin/screens/main_screen/web_home.dart';
 import 'package:brightminds_admin/utils/app_colors.dart';
 import 'package:brightminds_admin/utils/buttons.dart';
 import 'package:brightminds_admin/utils/colors.dart';
@@ -123,9 +124,10 @@ class FormSelection extends StatelessWidget {
                                     .collection('extras')
                                     .doc(id)
                                     .delete();
-                                Navigator.pop(context); // Close dialog
-                                Navigator.pop(
-                                    context); // Go back to previous screen
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (builder) => WebHome()));
                               } catch (e) {
                                 print("Error deleting category: $e");
                                 ScaffoldMessenger.of(context).showSnackBar(

@@ -1,4 +1,5 @@
 import 'package:brightminds_admin/screens/detail/edit_lesson.dart';
+import 'package:brightminds_admin/screens/main_screen/web_home.dart';
 import 'package:brightminds_admin/utils/buttons.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -143,8 +144,10 @@ class _LessonDetailState extends State<LessonDetail> {
                                     .doc(widget.id)
                                     .delete();
                                 Navigator.pop(context); // Close dialog
-                                Navigator.pop(
-                                    context); // Go back to previous screen
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (builder) => WebHome()));
                               } catch (e) {
                                 print("Error deleting category: $e");
                                 ScaffoldMessenger.of(context).showSnackBar(
