@@ -175,12 +175,7 @@ class _LessonDetailState extends State<LessonDetail> {
                       context,
                       MaterialPageRoute(
                           builder: (builder) => EditLesson(
-                                mediaType: widget.mediaType,
                                 id: widget.id,
-                                levelSubCategory: widget.categoryName,
-                                image: widget.image,
-                                characterName: widget.letter,
-                                audioURL: widget.audio,
                               )));
                 },
                 title: "Edit",

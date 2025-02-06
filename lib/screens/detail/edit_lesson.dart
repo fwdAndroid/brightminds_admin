@@ -1,253 +1,281 @@
 import 'dart:io';
-import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:typed_data';
 import 'package:brightminds_admin/screens/main_screen/web_home.dart';
-import 'package:brightminds_admin/utils/buttons.dart';
-import 'package:brightminds_admin/utils/colors.dart';
+import 'package:brightminds_admin/utils/image_utils.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:video_player/video_player.dart';
+import 'package:path/path.dart' as path;
 
 class EditLesson extends StatefulWidget {
-  final String levelSubCategory;
-  final String image;
   final String id;
-  final String characterName;
-  final String audioURL;
-  final String mediaType;
 
-  EditLesson({
-    super.key,
-    required this.id,
-    required this.levelSubCategory,
-    required this.image,
-    required this.characterName,
-    required this.audioURL,
-    required this.mediaType,
-  });
+  const EditLesson({super.key, required this.id});
 
   @override
   State<EditLesson> createState() => _EditLessonState();
 }
 
 class _EditLessonState extends State<EditLesson> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                FormSelection(
-                  mediaType: widget.mediaType,
-                  id: widget.id,
-                  categoryName: widget.levelSubCategory,
-                  image: widget.image,
-                  characterName: widget.characterName,
-                  audioURL: widget.audioURL,
-                ),
-                ImageSelection(imagePath: widget.image),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class FormSelection extends StatefulWidget {
-  final String categoryName;
-  final String image;
-  final String id;
-  final String audioURL;
-  final String characterName;
-  final String mediaType;
-
-  FormSelection({
-    super.key,
-    required this.categoryName,
-    required this.image,
-    required this.characterName,
-    required this.id,
-    required this.audioURL,
-    required this.mediaType,
-  });
-
-  @override
-  State<FormSelection> createState() => _FormSelectionState();
-}
-
-class _FormSelectionState extends State<FormSelection> {
-  late TextEditingController _categoryNameController;
-  late TextEditingController _characterNameController;
-
-  bool _isUpdating = false;
-  String? _selectedImagePath;
-  String? _selectedAudioPath;
-
+  TextEditingController _characterName = TextEditingController();
+  String? imageUrl, mediaUrl, mediaType;
+  Uint8List? newImage;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  VideoPlayerController? _videoController;
+  bool isPlaying = false;
+  bool isLoading = false;
+  Uint8List? _media;
+  Uint8List? _image;
   @override
   void initState() {
     super.initState();
-    _categoryNameController = TextEditingController(text: widget.categoryName);
-    _characterNameController =
-        TextEditingController(text: widget.characterName);
+    fetchData();
   }
 
-  Future<void> _pickImage() async {
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result != null) {
-      setState(() {
-        _selectedImagePath = result.files.single.path;
-      });
-      // Implement image upload logic here
-    }
-  }
-
-  Future<void> _pickAudio() async {
-    FilePickerResult? result =
-        await FilePicker.platform.pickFiles(type: FileType.audio);
-    if (result != null) {
-      setState(() {
-        _selectedAudioPath = result.files.single.path;
-      });
-      // Implement audio upload logic here
-    }
-  }
-
-  Future<void> _updateExercise() async {
+  Future<void> selectImage() async {
+    Uint8List ui = await pickImage(ImageSource.gallery);
     setState(() {
-      _isUpdating = true;
+      _image = ui;
     });
+  }
 
+  /// ✅ Fetch Data from Firestore
+  void fetchData() async {
     try {
-      // Fetch the current document
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('letters')
+          .collection("letters")
           .doc(widget.id)
           .get();
 
-      List<dynamic> exercises = doc['exercises'] ?? [];
+      if (doc.exists) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-      // Iterate over the exercises to find the one to update
-      for (int i = 0; i < exercises.length; i++) {
-        var exercise = exercises[i];
-        if (exercise['characterName'] == widget.characterName) {
-          // Update only the changed fields
-          if (_selectedAudioPath != null &&
-              _selectedAudioPath != exercise['audioURL']) {
-            exercise['audioURL'] = _selectedAudioPath;
-          }
-          if (_selectedImagePath != null &&
-              _selectedImagePath != exercise['photoURL']) {
-            exercise['photoURL'] = _selectedImagePath;
-          }
-          if (_characterNameController.text.isNotEmpty &&
-              _characterNameController.text != exercise['characterName']) {
-            exercise['characterName'] = _characterNameController.text;
-          }
+        if (data.containsKey('exercises') && data['exercises'] is List) {
+          List exercises = data['exercises'];
 
-          exercises[i] = exercise; // Update the object in the array
-          break; // No need to continue once the target exercise is updated
+          if (exercises.isNotEmpty) {
+            Map<String, dynamic> firstExercise = exercises[0];
+
+            setState(() {
+              _characterName.text = firstExercise['characterName'] ?? '';
+              imageUrl = firstExercise['photoURL'];
+              mediaUrl = firstExercise['audioURL'];
+              mediaType = firstExercise['mediaType'];
+
+              if (mediaType == "video" && mediaUrl != null) {
+                _videoController = VideoPlayerController.network(mediaUrl!)
+                  ..initialize().then((_) {
+                    setState(() {});
+                  });
+              }
+            });
+          }
         }
       }
-
-      // Write the updated exercises array back to Firestore
-      await FirebaseFirestore.instance
-          .collection('letters')
-          .doc(widget.id)
-          .update({'exercises': exercises});
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Exercise updated successfully!')),
-      );
-      Navigator.push(
-          context, MaterialPageRoute(builder: (builder) => WebHome()));
     } catch (e) {
-      print("Error updating exercise: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update exercise.')),
-      );
-    } finally {
-      setState(() {
-        _isUpdating = false;
-      });
+      debugPrint("Error fetching data: $e");
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 500,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _categoryNameController,
-              decoration: InputDecoration(labelText: 'Category Name'),
+  /// ✅ Show Media Selection Dialog
+  Future<void> showMediaDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select Media Type"),
+          content: const Text("Choose whether to upload audio or video."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, 'audio');
+              },
+              child: const Text("Upload Audio"),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              radius: 50,
-              backgroundImage: _selectedImagePath != null
-                  ? FileImage(File(_selectedImagePath!))
-                  : NetworkImage(widget.image) as ImageProvider,
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, 'video');
+              },
+              child: const Text("Upload Video"),
             ),
-          ),
-          ElevatedButton(
-            onPressed: _pickImage,
-            child: Text("Change Image"),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextFormField(
-              controller: _characterNameController,
-              decoration: InputDecoration(labelText: 'Character Name'),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text("Audio Path: ${_selectedAudioPath ?? widget.audioURL}"),
-          ),
-          ElevatedButton(
-            onPressed: _pickAudio,
-            child: Text("Change Audio"),
-          ),
-          SaveButton(
-            title: "Update",
-            onTap: _updateExercise,
-            color: mainBtnColor,
-          ),
-          if (_isUpdating) CircularProgressIndicator(),
-        ],
-      ),
-    );
+          ],
+        );
+      },
+    ).then((selection) {
+      if (selection == 'audio') {
+        selectMedia(FileType.custom, ['mp3'], 'audio');
+      } else if (selection == 'video') {
+        selectMedia(FileType.video, null, 'video');
+      }
+    });
   }
-}
 
-class ImageSelection extends StatelessWidget {
-  final String imagePath;
+  /// ✅ Select Audio or Video
+  Future<void> selectMedia(
+      FileType type, List<String>? extensions, String selectedMediaType) async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: type,
+      allowedExtensions: extensions,
+    );
 
-  const ImageSelection({super.key, required this.imagePath});
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _media = result.files.single.bytes;
+        mediaType = selectedMediaType;
+        mediaUrl = result.files.single.name; // ✅ Display selected file name
+      });
+      print(
+          "${mediaType!.toUpperCase()} Selected: ${result.files.single.name}");
+    } else {
+      print("No $mediaType file selected.");
+    }
+  }
+
+  /// ✅ Upload File to Firebase Storage
+  Future<String> uploadFile(Uint8List file, String path) async {
+    try {
+      Reference ref = FirebaseStorage.instance.ref().child(path);
+      UploadTask uploadTask = ref.putData(file);
+      TaskSnapshot snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      print("Error uploading file: $e");
+      return "";
+    }
+  }
+
+  /// ✅ Update Lesson Data
+  void updateLesson() async {
+    setState(() => isLoading = true);
+
+    Map<String, dynamic> updatedData = {};
+
+    if (_characterName.text.isNotEmpty) {
+      updatedData['characterName'] = _characterName.text;
+    }
+
+    if (_image != null) {
+      String newImageUrl = await uploadFile(_image!, "images/${widget.id}.jpg");
+      if (newImageUrl.isNotEmpty) updatedData['photoURL'] = newImageUrl;
+    }
+
+    if (_media != null) {
+      String extension = mediaType == "audio" ? "mp3" : "mp4";
+      String newMediaUrl =
+          await uploadFile(_media!, "media/${widget.id}.$extension");
+
+      if (newMediaUrl.isNotEmpty) {
+        updatedData['audioURL'] = newMediaUrl;
+        updatedData['mediaType'] = mediaType;
+      }
+    }
+
+    if (updatedData.isNotEmpty) {
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection("letters")
+          .doc(widget.id)
+          .get();
+
+      if (doc.exists) {
+        List exercises = doc['exercises'] ?? [];
+
+        int exerciseIndex = exercises.indexWhere(
+          (exercise) =>
+              exercise.containsKey('uuid') && exercise['uuid'] == widget.id,
+        );
+
+        if (exerciseIndex != -1) {
+          exercises[exerciseIndex] = {
+            ...exercises[exerciseIndex],
+            ...updatedData,
+          };
+
+          await FirebaseFirestore.instance
+              .collection("letters")
+              .doc(widget.id)
+              .update({'exercises': exercises});
+        } else {
+          print("Exercise not found in Firestore!");
+        }
+      }
+    }
+
+    setState(() => isLoading = false);
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text("Lesson updated successfully!")));
+    Navigator.push(context, MaterialPageRoute(builder: (builder) => WebHome()));
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    _videoController?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Center(
-            child: Image.asset(
-              "assets/logo.png",
-              height: 150,
+    return Scaffold(
+      appBar: AppBar(title: Text("Edit Lesson")),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _characterName,
+              decoration: InputDecoration(labelText: "Character Name"),
             ),
-          ),
-        ],
+            SizedBox(height: 20),
+
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: GestureDetector(
+                onTap: () => selectImage(),
+                child: _image != null
+                    ? CircleAvatar(
+                        radius: 59, backgroundImage: MemoryImage(_image!))
+                    : imageUrl != null
+                        ? CircleAvatar(
+                            radius: 59,
+                            backgroundImage: NetworkImage(imageUrl!))
+                        : Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Image.asset(
+                              "assets/Front view of beautiful man.png",
+                              height: 100,
+                            ),
+                          ),
+              ),
+            ),
+
+            /// ✅ Show Selected Media Name
+            TextButton(
+              onPressed: showMediaDialog,
+              child: Text("Change Media"),
+            ),
+            // ✅ Display Selected Media Type Below Button
+            if (mediaType != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  "Selected Media Type: ${mediaType!.toUpperCase()}",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            SizedBox(height: 30),
+            isLoading
+                ? CircularProgressIndicator()
+                : ElevatedButton(
+                    onPressed: updateLesson,
+                    child: Text("Update Lesson"),
+                  ),
+          ],
+        ),
       ),
     );
   }

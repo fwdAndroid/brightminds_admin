@@ -156,7 +156,10 @@ class _FormSectionState extends State<_FormSection> {
                         radius: 59, backgroundImage: MemoryImage(_image!))
                     : Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: Image.asset("assets/Choose Image.png"),
+                        child: Image.asset(
+                          "assets/Choose Image.png",
+                          height: 100,
+                        ),
                       ),
               ),
             ),
