@@ -46,6 +46,7 @@ class _GreekSectionState extends State<GreekSection> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: FloatingActionButton(
           backgroundColor: mainBtnColor,
           onPressed: () {
@@ -78,7 +79,7 @@ class _GreekSectionState extends State<GreekSection> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (builder) => AddExtraCategory(
+                          builder: (builder) => GreekCategoryLevelWise(
                                 level: "Προνήπιο",
                               )));
                 },
@@ -102,7 +103,7 @@ class _GreekSectionState extends State<GreekSection> {
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (builder) => AddExtraCategory(
+                          builder: (builder) => GreekCategoryLevelWise(
                                 level: "Νηπιαγωγείο",
                               )));
                 },

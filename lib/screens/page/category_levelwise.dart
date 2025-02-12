@@ -28,7 +28,7 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
             spacing: 18.0,
             children: [
               'Pre-Kindergarden',
-              'Kindergarten',
+              'Kindergarden',
               'Level 1',
               'Level 2',
               'Level 3',
@@ -44,6 +44,8 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
           ),
         ),
       ),
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.miniCenterDocked,
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
@@ -170,11 +172,14 @@ class _CategoryLevelWiseState extends State<CategoryLevelWise> {
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ElevatedButton(
-              onPressed: copyAll,
-              child: Text("Copy All"),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: ElevatedButton(
+                onPressed: copyAll,
+                child: Text("Copy All"),
+              ),
             ),
           ),
         ],

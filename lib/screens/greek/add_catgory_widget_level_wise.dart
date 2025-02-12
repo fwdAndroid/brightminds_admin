@@ -25,6 +25,7 @@ class _AddCatgoryWidgetLevelWiseState extends State<AddCatgoryWidgetLevelWise> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(),
       backgroundColor: Colors.white,
       body: Column(
         children: [

@@ -29,6 +29,7 @@ class _ViewCategoryState extends State<ViewCategory> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.endContained,
       floatingActionButton: FloatingActionButton(
           child: Icon(Icons.add),
           onPressed: () {

@@ -17,6 +17,7 @@ class _ExcersiceWebState extends State<ExcersiceWeb> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         backgroundColor: mainBtnColor,
         onPressed: () {

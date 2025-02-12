@@ -60,7 +60,7 @@ class _GreekCategoryLevelWiseState extends State<GreekCategoryLevelWise> {
       body: Column(
         children: [
           SizedBox(
-            height: 460,
+            height: 430,
             child: StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection("categories")

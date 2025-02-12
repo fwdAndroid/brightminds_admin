@@ -46,6 +46,7 @@ class _CategoryWebState extends State<CategoryWeb> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton(
           backgroundColor: mainBtnColor,
           onPressed: () {
