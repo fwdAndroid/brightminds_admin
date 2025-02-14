@@ -2,6 +2,7 @@ import 'package:brightminds_admin/database/database.dart';
 import 'package:brightminds_admin/screens/deleteupdate/update_categories.dart';
 import 'package:brightminds_admin/screens/detail/lesson_detail.dart';
 import 'package:brightminds_admin/screens/main_screen/add/add_exercise.dart';
+import 'package:brightminds_admin/screens/main_screen/web_home.dart';
 import 'package:brightminds_admin/utils/app_colors.dart';
 import 'package:brightminds_admin/utils/buttons.dart';
 import 'package:brightminds_admin/utils/colors.dart';
@@ -48,6 +49,7 @@ class _ViewCategoryState extends State<ViewCategory> {
             child: Row(
               children: [
                 FormSelection(
+                  level: widget.level,
                   id: widget.id,
                   categoryName: widget.categoryName,
                   image: widget.image,
@@ -69,10 +71,13 @@ class FormSelection extends StatelessWidget {
   String categoryName;
   String image;
   String id;
+  String level;
+
   FormSelection(
       {super.key,
       required this.categoryName,
       required this.image,
+      required this.level,
       required this.id});
 
   @override
@@ -104,6 +109,7 @@ class FormSelection extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                           builder: (context) => UpdateCategories(
+                              levelCategory: level,
                               id: id,
                               categoryName: categoryName,
                               image: image)));
@@ -113,50 +119,58 @@ class FormSelection extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: SaveButton(
-                title: "Delete",
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('Confirm Delete'),
-                        content: Text(
-                            'Are you sure you want to delete this category?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
+              title: "Delete",
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Confirm Delete'),
+                      content: Text(
+                          'Are you sure you want to delete this category?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context); // Close dialog
+                          },
+                          child: Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            try {
+                              String categoryId = id;
+                              String categoryNameS = categoryName;
+
+                              // Delete category from "categories" collection
+                              await FirebaseFirestore.instance
+                                  .collection('categories')
+                                  .doc(categoryId)
+                                  .delete();
+
                               Navigator.pop(context); // Close dialog
-                            },
-                            child: Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              try {
-                                await FirebaseFirestore.instance
-                                    .collection('categories')
-                                    .doc(id)
-                                    .delete();
-                                Navigator.pop(context); // Close dialog
-                                Navigator.pop(
-                                    context); // Go back to previous screen
-                              } catch (e) {
-                                print("Error deleting category: $e");
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content:
-                                          Text('Failed to delete category')),
-                                );
-                              }
-                            },
-                            child: Text('Delete',
-                                style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                color: Colors.red),
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (builder) =>
+                                          WebHome())); // Go back to previous screen
+                            } catch (e) {
+                              print("Error deleting category: $e");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                    content: Text('Failed to delete category')),
+                              );
+                            }
+                          },
+                          child: Text('Delete',
+                              style: TextStyle(color: Colors.red)),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              color: Colors.red,
+            ),
           ),
         ],
       ),

@@ -14,11 +14,15 @@ class UpdateCategories extends StatefulWidget {
   String categoryName;
   String image;
   String id;
-  UpdateCategories(
-      {super.key,
-      required this.id,
-      required this.categoryName,
-      required this.image});
+  String levelCategory; // ✅ Add this
+
+  UpdateCategories({
+    super.key,
+    required this.id,
+    required this.categoryName,
+    required this.image,
+    required this.levelCategory, // ✅ Pass levelCategory
+  });
 
   @override
   State<UpdateCategories> createState() => _UpdateCategoriesState();
@@ -37,6 +41,7 @@ class _UpdateCategoriesState extends State<UpdateCategories> {
                   id: widget.id,
                   categoryName: widget.categoryName,
                   image: widget.image,
+                  levelCategory: widget.levelCategory, // ✅ Pass it here
                 ),
                 ImageSelection(),
               ],
@@ -52,12 +57,14 @@ class FormSelection extends StatefulWidget {
   String categoryName;
   String image;
   String id;
+  String levelCategory; // ✅ Include levelCategory
 
   FormSelection({
     super.key,
     required this.categoryName,
     required this.image,
     required this.id,
+    required this.levelCategory, // ✅ Receive levelCategory
   });
 
   @override
@@ -69,14 +76,15 @@ class _FormSelectionState extends State<FormSelection> {
   bool _isUpdating = false;
   String? imageUrl;
   Uint8List? _image;
+
   @override
   void initState() {
     super.initState();
     fetchData();
+    print(widget.levelCategory);
   }
 
   void fetchData() async {
-    // Fetch data from Firestore
     DocumentSnapshot doc = await FirebaseFirestore.instance
         .collection('categories')
         .doc(widget.id)
@@ -84,10 +92,8 @@ class _FormSelectionState extends State<FormSelection> {
 
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
-    // Update the controllers with the fetched data
     setState(() {
-      _categoryNameController.text =
-          data['categoryName'] ?? ''; // Convert int to string
+      _categoryNameController.text = data['categoryName'] ?? '';
       imageUrl = data['photoURL'];
     });
   }
@@ -100,8 +106,10 @@ class _FormSelectionState extends State<FormSelection> {
   }
 
   Future<String> uploadImageToStorage(Uint8List image) async {
-    Reference ref =
-        FirebaseStorage.instance.ref().child('users').child('${widget.id}.jpg');
+    Reference ref = FirebaseStorage.instance
+        .ref()
+        .child('categories')
+        .child('${widget.id}.jpg');
     UploadTask uploadTask = ref.putData(image);
     TaskSnapshot snapshot = await uploadTask;
     return await snapshot.ref.getDownloadURL();
@@ -112,6 +120,9 @@ class _FormSelectionState extends State<FormSelection> {
       _isUpdating = true;
     });
 
+    String oldCategoryName = widget.categoryName; // Store old category name
+    String newCategoryName = _categoryNameController.text;
+
     try {
       // Upload new image if available
       String? downloadUrl;
@@ -120,24 +131,62 @@ class _FormSelectionState extends State<FormSelection> {
       } else {
         downloadUrl = imageUrl;
       }
-      // Update Firestore
+
+      // Update Firestore categories collection
       await FirebaseFirestore.instance
           .collection('categories')
           .doc(widget.id)
           .update({
-        'categoryName': _categoryNameController.text,
+        'categoryName': newCategoryName,
         "photoURL": downloadUrl,
       });
 
+      // Fetch all letters documents
+      QuerySnapshot lettersSnapshot =
+          await FirebaseFirestore.instance.collection('letters').get();
+
+      int updatedCount = 0;
+
+      for (var doc in lettersSnapshot.docs) {
+        List<dynamic> exercises =
+            List.from(doc['exercises']); // Get exercises array
+        bool updated = false;
+
+        for (int i = 0; i < exercises.length; i++) {
+          Map<String, dynamic> exercise =
+              Map<String, dynamic>.from(exercises[i]);
+
+          if (exercise['levelSubCategory'] == oldCategoryName) {
+            exercise['levelSubCategory'] = newCategoryName; // Update value
+            updated = true;
+          }
+          if (exercise['levelCategory'] == oldCategoryName) {
+            exercise['levelCategory'] = newCategoryName; // Update value
+            updated = true;
+          }
+
+          exercises[i] = exercise; // Save updated map back to the list
+        }
+
+        if (updated) {
+          await doc.reference.update({'exercises': exercises});
+          updatedCount++;
+        }
+      }
+
+      print("Updated $updatedCount documents in letters collection.");
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Category updated successfully!')),
+        SnackBar(
+            content:
+                Text('Category and related letters updated successfully!')),
       );
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (builder) => WebHome()));
     } catch (e) {
       print("Update error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating category.')),
+        SnackBar(content: Text('Error updating category and letters.')),
       );
     } finally {
       setState(() {
