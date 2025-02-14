@@ -194,7 +194,9 @@ class ImageSelection extends StatefulWidget {
 
 class _ImageSelectionState extends State<ImageSelection> {
   bool isCopyMode = false;
+  bool isDeleteMode = false;
   List<Map<String, dynamic>> selectedExercises = [];
+  List<Map<String, dynamic>> allExercises = [];
   String? selectedLevel;
   String? selectedCategoryName;
   List<String> levels = [];
@@ -294,7 +296,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                           ),
                         );
                       },
-                      trailing: isCopyMode
+                      trailing: (isCopyMode || isDeleteMode)
                           ? Checkbox(
                               value: isSelected,
                               onChanged: (bool? value) {
@@ -331,6 +333,32 @@ class _ImageSelectionState extends State<ImageSelection> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // DELETE Button (Always Visible)
+                SizedBox(
+                  width: 200,
+                  child: SaveButton(
+                    color: red,
+                    onTap: toggleDeleteMode,
+                    title: isDeleteMode ? 'Cancel Delete' : 'Delete',
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                // DELETE CONFIRMATION BUTTON (Only shows in Delete Mode)
+                if (isDeleteMode && selectedExercises.isNotEmpty)
+                  SizedBox(
+                    width: 200,
+                    child: SaveButton(
+                      color: red,
+                      onTap: deleteSelectedExercises,
+                      title: 'Delete Selected',
+                    ),
+                  ),
+
+                const SizedBox(width: 10),
+
+                // COPY Button (Toggle Copy Mode)
                 SizedBox(
                   width: 200,
                   child: SaveButton(
@@ -339,26 +367,6 @@ class _ImageSelectionState extends State<ImageSelection> {
                     title: isCopyMode ? 'Cancel Copy' : 'Copy',
                   ),
                 ),
-                const SizedBox(width: 16),
-                if (isCopyMode && selectedExercises.isNotEmpty)
-                  SizedBox(
-                    width: 200,
-                    child: SaveButton(
-                      color: mainBtnColor,
-                      onTap: openPasteDialog,
-                      title: 'Paste',
-                    ),
-                  ),
-                const SizedBox(width: 16),
-                if (isCopyMode)
-                  SizedBox(
-                    width: 200,
-                    child: SaveButton(
-                      color: mainBtnColor,
-                      onTap: copyAllExercises,
-                      title: 'Copy All',
-                    ),
-                  ),
               ],
             ),
           ),
@@ -367,10 +375,19 @@ class _ImageSelectionState extends State<ImageSelection> {
     );
   }
 
-  List<Map<String, dynamic>> allExercises = [];
   void copyAllExercises() {
     setState(() {
       selectedExercises = List.from(allExercises);
+    });
+  }
+
+  /// Toggle DELETE mode
+  void toggleDeleteMode() {
+    setState(() {
+      isDeleteMode = !isDeleteMode;
+      if (!isDeleteMode) {
+        selectedExercises.clear(); // Clear selection when exiting delete mode
+      }
     });
   }
 
@@ -562,5 +579,28 @@ class _ImageSelectionState extends State<ImageSelection> {
     } catch (e) {
       print("Error fetching dropdown data: $e");
     }
+  }
+
+  //dELETE
+  void deleteSelectedExercises() async {
+    for (var exercise in selectedExercises) {
+      try {
+        await FirebaseFirestore.instance
+            .collection('letters')
+            .doc(exercise['uuid']) // Assuming 'uuid' is the document ID
+            .delete();
+      } catch (e) {
+        print('Failed to delete exercise: $e');
+      }
+    }
+
+    setState(() {
+      isCopyMode = false;
+      selectedExercises.clear();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Selected exercises deleted successfully!')),
+    );
   }
 }
