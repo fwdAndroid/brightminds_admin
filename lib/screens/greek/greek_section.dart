@@ -1,4 +1,3 @@
-import 'package:brightminds_admin/screens/extra_category_english/add_extra_category.dart';
 import 'package:brightminds_admin/screens/greek/add_subject_greek.dart';
 import 'package:brightminds_admin/screens/greek/greek_category_livel_wise.dart';
 import 'package:brightminds_admin/utils/colors.dart';
@@ -13,7 +12,9 @@ class GreekSection extends StatefulWidget {
 
 class _GreekSectionState extends State<GreekSection> {
   Widget _buildLevelCard(
-      BuildContext context, String level, String extraClass, VoidCallback tap) {
+    BuildContext context,
+    String level,
+  ) {
     return Card(
       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(
@@ -25,10 +26,6 @@ class _GreekSectionState extends State<GreekSection> {
         title: Text(
           level,
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-        subtitle: TextButton(
-          onPressed: tap,
-          child: Text(extraClass),
         ),
         trailing: Icon(Icons.arrow_forward_ios),
         onTap: () {
@@ -109,54 +106,12 @@ class _GreekSectionState extends State<GreekSection> {
                 },
               ),
             ),
-            _buildLevelCard(context, 'Επίπεδο 1', 'Extra  ', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => AddExtraCategory(
-                            level: 'Επίπεδο 1',
-                          )));
-            }),
-            _buildLevelCard(context, 'Επίπεδο 2', 'Extra  ', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => AddExtraCategory(
-                            level: 'Επίπεδο 2',
-                          )));
-            }),
-            _buildLevelCard(context, 'Επίπεδο 3', 'Extra', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => AddExtraCategory(
-                            level: "Επίπεδο 3",
-                          )));
-            }),
-            _buildLevelCard(context, 'Επίπεδο 4', 'Extra  ', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => AddExtraCategory(
-                            level: "Επίπεδο 4",
-                          )));
-            }),
-            _buildLevelCard(context, 'Επίπεδο 5', 'Extra', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => AddExtraCategory(
-                            level: "Επίπεδο 5",
-                          )));
-            }),
-            _buildLevelCard(context, 'Επίπεδο 6', 'Extra', () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (builder) => AddExtraCategory(
-                            level: "Επίπεδο 6",
-                          )));
-            }),
+            _buildLevelCard(context, 'Επίπεδο 1'),
+            _buildLevelCard(context, 'Επίπεδο 2'),
+            _buildLevelCard(context, 'Επίπεδο 3'),
+            _buildLevelCard(context, 'Επίπεδο 4'),
+            _buildLevelCard(context, 'Επίπεδο 5'),
+            _buildLevelCard(context, 'Επίπεδο 6'),
           ]),
         ));
   }
