@@ -335,7 +335,7 @@ class _ImageSelectionState extends State<ImageSelection> {
               children: [
                 // DELETE Button (Always Visible)
                 SizedBox(
-                  width: 200,
+                  width: 100,
                   child: SaveButton(
                     color: red,
                     onTap: toggleDeleteMode,
@@ -348,7 +348,7 @@ class _ImageSelectionState extends State<ImageSelection> {
                 // DELETE CONFIRMATION BUTTON (Only shows in Delete Mode)
                 if (isDeleteMode && selectedExercises.isNotEmpty)
                   SizedBox(
-                    width: 200,
+                    width: 100,
                     child: SaveButton(
                       color: red,
                       onTap: deleteSelectedExercises,
@@ -360,13 +360,34 @@ class _ImageSelectionState extends State<ImageSelection> {
 
                 // COPY Button (Toggle Copy Mode)
                 SizedBox(
-                  width: 200,
+                  width: 100,
                   child: SaveButton(
                     color: mainBtnColor,
                     onTap: toggleCopyMode,
                     title: isCopyMode ? 'Cancel Copy' : 'Copy',
                   ),
                 ),
+                const SizedBox(width: 10),
+
+                if (isCopyMode)
+                  SizedBox(
+                    width: 100,
+                    child: SaveButton(
+                      color: mainBtnColor,
+                      title: "Copy All",
+                      onTap: copyAllExercises, // Calls function to select all
+                    ),
+                  ),
+                const SizedBox(width: 10),
+
+                isCopyMode
+                    ? SizedBox(
+                        width: 100,
+                        child: SaveButton(
+                            color: mainBtnColor,
+                            title: "Paste",
+                            onTap: openPasteDialog))
+                    : SizedBox()
               ],
             ),
           ),
